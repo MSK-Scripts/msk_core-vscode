@@ -1,0 +1,58 @@
+{
+  "name": "msk-core-lua",
+  "displayName": "MSK Core (FiveM) IntelliSense",
+  "description": "IntelliSense, Autocompletion und Typen fuer die MSK.* API der msk_core Library (FiveM).",
+  "version": "1.0.0",
+  "publisher": "musiker15",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/musiker15/msk_core-vscode"
+  },
+  "engines": {
+    "vscode": "^1.71.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "Lua",
+    "FiveM",
+    "MSK",
+    "msk_core",
+    "IntelliSense"
+  ],
+  "icon": "logo.png",
+  "extensionDependencies": [
+    "sumneko.lua"
+  ],
+  "activationEvents": [
+    "onLanguage:lua"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "MSK Core",
+      "properties": {
+        "mskCore.enableLibrary": {
+          "type": "boolean",
+          "default": true,
+          "description": "Bindet die MSK.* Definitionen automatisch in Lua.workspace.library ein."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "mskCore.reload",
+        "title": "Definitionen neu einbinden",
+        "category": "MSK Core"
+      },
+      {
+        "command": "mskCore.showLibraryPath",
+        "title": "Pfad der Definitionen anzeigen",
+        "category": "MSK Core"
+      }
+    ]
+  }
+}
