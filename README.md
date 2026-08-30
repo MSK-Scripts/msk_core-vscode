@@ -1,7 +1,7 @@
 # MSK Core (FiveM) IntelliSense
 
 Autocompletion, Signaturen und Typprüfung für die `MSK.*` API der
-[msk_core](https://github.com/musiker15/msk_core) Library.
+[msk_core](https://github.com/MSK-Scripts/msk_core) Library.
 
 Die Extension trägt ihre Definitionen global in `Lua.workspace.library` ein.
 Sie wirken damit in jedem Projekt, ohne dass pro Resource etwas konfiguriert
