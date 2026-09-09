@@ -20,9 +20,9 @@ function luaConfig() {
 }
 
 /**
- * Traegt den Library-Pfad ein und raeumt dabei Eintraege frueherer Versionen
- * dieser Extension weg (der Ordnername enthaelt die Version, ein Update
- * hinterlaesst sonst tote Pfade).
+ * Trägt den Library-Pfad ein und räumt dabei Einträge früherer Versionen
+ * dieser Extension weg (der Ordnername enthält die Version, ein Update
+ * hinterlässt sonst tote Pfade).
  */
 async function setLibrary(context, enable) {
     const config = luaConfig();
@@ -81,7 +81,7 @@ async function activate(context) {
             vscode.window.showInformationMessage(
                 active
                     ? `MSK Core: Definitionen eingebunden (${target})`
-                    : 'MSK Core: Definitionen ausgehaengt.'
+                    : 'MSK Core: Definitionen ausgehängt.'
             );
         }),
         vscode.commands.registerCommand('mskCore.showLibraryPath', () => {
