@@ -1,12 +1,12 @@
 ---@meta
 --- Gemeinsame Datenstrukturen der msk_core Library (FiveM).
---- Quelle: modules/*/ in msk_core 3.3.1
+--- Quelle: bridge/ und modules/*/ in msk_core 4.0.0
 
 --------------------------------------------------------------------------------
 -- Player
 --------------------------------------------------------------------------------
 
----Der lokale Spieler. Auf dem Client haelt ein 100ms-Thread die Felder aktuell,
+---Der lokale Spieler. Auf dem Client hält ein 100ms-Thread die Felder aktuell,
 ---in Consumer-Resources ist es eine Read-Only-Sicht auf dieselben Werte.
 ---@class MSKPlayer
 ---@field clientId number Lokaler Player-Index (PlayerId()).
@@ -17,12 +17,12 @@
 ---@field coords vector3 Aktuelle Position.
 ---@field heading number Aktuelle Blickrichtung.
 ---@field state table Statebag des Spielers.
----@field vehicle number|false Fahrzeug-Handle, oder false ausserhalb eines Fahrzeugs.
+---@field vehicle number|false Fahrzeug-Handle, oder false außerhalb eines Fahrzeugs.
 ---@field seat number|false Sitzindex (-1 = Fahrer), oder false.
 ---@field weapon number|false Hash der aktuellen Waffe, oder false.
----@field isDead boolean Beruecksichtigt visn_are und osp_ambulance, falls gestartet.
+---@field isDead boolean Berücksichtigt visn_are und osp_ambulance, falls gestartet.
 ---@field Notify fun(title: string, message: string, typ?: MSKNotifyType, duration?: number)
----@field [number] table Zugriff auf einen anderen Spieler ueber dessen Server-ID.
+---@field [number] table Zugriff auf einen anderen Spieler über dessen Server-ID.
 ---@overload fun(key: string, val: any, update?: boolean): any Liest oder setzt ein eigenes Feld. update propagiert es an den Core.
 local MSKPlayer = {}
 
@@ -48,18 +48,18 @@ function MSKPlayer.Get(playerId, key) end
 
 ---@class MSKPointProperties
 ---@field coords vector3|table Mittelpunkt des Points.
----@field distance number Radius, ab dem onEnter ausgeloest wird.
+---@field distance number Radius, ab dem onEnter ausgelöst wird.
 ---@field onEnter? fun(point: MSKPoint)
 ---@field onExit? fun(point: MSKPoint)
 ---@field onRemove? fun(point: MSKPoint)
 
----Ein registrierter Point. Enthaelt alle uebergebenen Properties plus die
+---Ein registrierter Point. Enthält alle übergebenen Properties plus die
 ---Laufzeitfelder, die der Point-Thread pflegt.
 ---@class MSKPoint : MSKPointProperties
 ---@field id number Fortlaufende ID, von Points.Add vergeben.
 ---@field inside boolean Ob der Spieler gerade im Radius ist.
----@field currentDistance number|nil Distanz zum Spieler, nur waehrend inside.
----@field isClosest boolean Ob dies der naechstgelegene Point ist.
+---@field currentDistance number|nil Distanz zum Spieler, nur während inside.
+---@field isClosest boolean Ob dies der nächstgelegene Point ist.
 ---@field Remove fun() Entfernt diesen Point.
 
 --------------------------------------------------------------------------------
@@ -69,10 +69,10 @@ function MSKPlayer.Get(playerId, key) end
 ---@class MSKProgressAnimation
 ---@field dict? string Animations-Dictionary, wird automatisch geladen.
 ---@field anim? string Name der Animation innerhalb des Dictionaries.
----@field clip? string Clip, der beim Stoppen abgeraeumt wird.
+---@field clip? string Clip, der beim Stoppen abgeräumt wird.
 ---@field blendIn? number Standard 3.0
 ---@field blendOut? number Standard 1.0
----@field duration? number Standard -1 (laeuft bis zum Stopp).
+---@field duration? number Standard -1 (läuft bis zum Stopp).
 ---@field flag? number Standard 49
 ---@field playbackRate? number Standard 0
 ---@field lockX? boolean
@@ -102,7 +102,7 @@ function MSKPlayer.Get(playerId, key) end
 ---@field disable? MSKProgressDisable
 
 --------------------------------------------------------------------------------
--- Context (Maus-Menue mit Drilldown)
+-- Context (Maus-Menü mit Drilldown)
 --------------------------------------------------------------------------------
 
 ---@class MSKContextOption
@@ -114,15 +114,15 @@ function MSKPlayer.Get(playerId, key) end
 ---@field image? string
 ---@field arrow? boolean Wird automatisch true, wenn menu gesetzt ist.
 ---@field disabled? boolean
----@field readOnly? boolean Eintrag ist sichtbar, aber nicht anwaehlbar.
+---@field readOnly? boolean Eintrag ist sichtbar, aber nicht anwählbar.
 ---@field progress? number Fortschrittsbalken im Eintrag, 0 bis 100.
 ---@field colorScheme? string
 ---@field metadata? table Zusatzinfos, die als Tooltip erscheinen.
----@field menu? string ID des Kontextmenues, in das gesprungen wird.
+---@field menu? string ID des Kontextmenüs, in das gesprungen wird.
 ---@field args? any Wird an onSelect, event und serverEvent weitergereicht.
----@field onSelect? fun(args: any) Laeuft nur bei registrierten Menues.
----@field event? string Client-Event, das beim Auswaehlen gefeuert wird.
----@field serverEvent? string Server-Event, das beim Auswaehlen gefeuert wird.
+---@field onSelect? fun(args: any) Läuft nur bei registrierten Menüs.
+---@field event? string Client-Event, das beim Auswählen gefeuert wird.
+---@field serverEvent? string Server-Event, das beim Auswählen gefeuert wird.
 
 ---@class MSKContextData
 ---@field id? string Pflicht bei Register, bei Show optional (dann inline).
@@ -130,9 +130,9 @@ function MSKPlayer.Get(playerId, key) end
 ---@field options MSKContextOption[]
 ---@field canClose? boolean Standard true.
 ---@field position? string Standard 'center'.
----@field menu? string Uebergeordnetes Menue, erzeugt den Zurueck-Pfeil.
----@field onBack? fun() Laeuft beim Sprung zum uebergeordneten Menue.
----@field onExit? fun() Laeuft beim Schliessen, wenn Hide(true) aufgerufen wird.
+---@field menu? string Übergeordnetes Menü, erzeugt den Zurück-Pfeil.
+---@field onBack? fun() Läuft beim Sprung zum übergeordneten Menü.
+---@field onExit? fun() Läuft beim Schließen, wenn Hide(true) aufgerufen wird.
 
 --------------------------------------------------------------------------------
 -- Menu (Tastatur, NativeUI-Stil)
@@ -184,10 +184,10 @@ function MSKPlayer.Get(playerId, key) end
 ---@class MSKCommandProperties
 ---@field help? string Beschreibung im Chat-Vorschlag.
 ---@field params? MSKCommandParam[]
----@field restricted? string|string[]|false ACE-Gruppe(n), die den Befehl nutzen duerfen.
+---@field restricted? string|string[]|false ACE-Gruppe(n), die den Befehl nutzen dürfen.
 ---@field showSuggestion? boolean Standard true.
 ---@field allowConsole? boolean Nur Server, Standard true.
----@field returnPlayer? boolean Nur Server: uebergibt das Framework-Objekt statt der ID.
+---@field returnPlayer? boolean Nur Server: übergibt das Spielerobjekt statt der ID.
 ---@field hotkey? string Nur Client: Taste, auf die der Befehl gelegt wird.
 
 --------------------------------------------------------------------------------
@@ -224,24 +224,171 @@ function MSKPlayer.Get(playerId, key) end
 ---@alias MSKFramework string
 ---| "ESX"
 ---| "QBCore"
----| "OXCORE"
+---| "Qbox"
 ---| "STANDALONE"
 
+---Erkanntes Framework und Inventory. Seit 4.0.0 auch in der Consumer-Resource
+---eine echte Tabelle, vorher wurde daraus eine Funktion.
 ---@class MSKBridge
----@field Framework table Framework-Objekt inklusive Type.
+---@field Framework MSKBridgeFramework
 ---@field Inventory string Erkanntes Inventory-System.
+---@field PlayerData MSKPlayerData Nur Client, wird bei jedem Zugriff neu geholt.
 ---@field isPlayerLoaded boolean Nur Client: ob der Spieler geladen ist.
 
----Sucht einen Spieler ueber genau eines dieser Felder.
+---@class MSKBridgeFramework
+---@field Type MSKFramework
+---@field Events table<string, string> Neutrale Eventnamen.
+---@field Core table Nur innerhalb von msk_core, nicht über die Exportgrenze.
+
+---Sucht einen Spieler über genau eines dieser Felder.
 ---@class MSKPlayerQuery
 ---@field source? number Server-ID.
 ---@field identifier? string Lizenz oder Identifier.
----@field citizenid? string Nur QBCore.
+---@field citizenid? string Auf QBCore und Qbox identisch mit identifier.
+---@field phone? string Nicht auf ESX.
+---@field userId? number Nur Qbox.
 
+---Job oder Gang, auf jedem Framework gleich aufgebaut.
 ---@class MSKPlayerJob
 ---@field name string
----@field label? string
+---@field label string
 ---@field grade number
----@field grade_name? string
----@field grade_label? string
----@field onDuty? boolean
+---@field gradeName string
+---@field gradeLabel string
+---@field salary number
+---@field isBoss boolean
+---@field onDuty boolean
+
+---Spielerdaten, auf ESX, QBCore und Qbox identisch. Ohne Methoden, so wie sie
+---exports.msk_core:GetPlayerData liefert.
+---@class MSKPlayerData
+---@field source number|nil Server-ID, nil wenn der Spieler offline ist.
+---@field identifier string
+---@field license string
+---@field name string
+---@field firstName string
+---@field lastName string
+---@field dob string
+---@field sex "male"|"female"
+---@field phone string|nil Auf ESX nil.
+---@field group string
+---@field job MSKPlayerJob
+---@field jobs table<string, number> Auf Qbox die echte Multijob-Map.
+---@field gang MSKPlayerJob|nil Auf ESX nil.
+---@field gangs table<string, number>
+---@field money table<string, number> cash, bank, black.
+---@field metadata table
+---@field position vector3|nil
+
+---Spielerobjekt: Daten plus Methoden. Die Methoden entstehen in der eigenen
+---Resource, weil Funktionen die Exportgrenze nicht überleben.
+---@class MSKPlayerObject : MSKPlayerData
+---@field SetJob fun(name: string, grade?: number): boolean
+---@field SetGang fun(name: string, grade?: number): boolean Auf ESX immer false.
+---@field SetDuty fun(onDuty: boolean): boolean
+---@field AddJob fun(name: string, grade?: number): boolean
+---@field RemoveJob fun(name: string): boolean
+---@field AddGang fun(name: string, grade?: number): boolean
+---@field RemoveGang fun(name: string): boolean
+---@field HasJob fun(name: string, minGrade?: number): boolean
+---@field HasGang fun(name: string, minGrade?: number): boolean
+---@field IsBoss fun(): boolean
+---@field IsOnDuty fun(): boolean
+---@field GetMoney fun(account: string): number
+---@field AddMoney fun(account: string, amount: number, reason?: string): boolean
+---@field RemoveMoney fun(account: string, amount: number, reason?: string): boolean
+---@field SetMoney fun(account: string, amount: number, reason?: string): boolean
+---@field GetMeta fun(key: string): any
+---@field SetMeta fun(key: string, value: any): boolean
+---@field GetInventory fun(): table
+---@field GetItem fun(name: string, metadata?: table): table|nil
+---@field HasItem fun(name: string, count?: number, metadata?: table): boolean
+---@field AddItem fun(name: string, count?: number, metadata?: table, slot?: number): boolean
+---@field RemoveItem fun(name: string, count?: number, metadata?: table, slot?: number): boolean
+---@field AddWeapon fun(name: string, count?: number, metadata?: table, slot?: number): boolean
+---@field RemoveWeapon fun(name: string, count?: number, metadata?: table, slot?: number): boolean
+---@field GetWeapon fun(name: string, metadata?: table): table|nil
+---@field CanCarryItem fun(name: string, count?: number, metadata?: table): boolean|nil nil heißt, das Inventory kann es nicht prüfen.
+---@field CanSwapItem fun(a: string, aCount: number, b: string, bCount: number): boolean|nil
+---@field SetMaxWeight fun(kilograms: number): boolean|nil
+---@field ClearInventory fun(): boolean|nil
+---@field Notify fun(title: string, message: string, typ?: MSKNotifyType, duration?: number)
+---@field Kick fun(reason?: string)
+---@field Save fun(): boolean
+---@field Refresh fun(): boolean
+---@field IsOnline fun(): boolean
+---@field GetCoords fun(): vector3|nil
+---@field SetCoords fun(coords: vector3|table): boolean
+---@field GetPed fun(): number|nil
+
+---Eine Job- oder Gang-Definition des Frameworks, nicht ein Spieler.
+---@class MSKJobDefinition
+---@field name string
+---@field label string
+---@field grades MSKJobGrade[] Nach grade sortiert.
+
+---@class MSKJobGrade
+---@field grade number
+---@field name string
+---@field label string
+---@field salary number
+---@field isBoss boolean
+
+--------------------------------------------------------------------------------
+-- VehicleStore (nur Server)
+--------------------------------------------------------------------------------
+
+---Tabellen- und Spaltennamen des laufenden Frameworks.
+---@class MSKVehicleSchema
+---@field table string owned_vehicles auf ESX, sonst player_vehicles.
+---@field owner string owner auf ESX, citizenid auf QBCore und Qbox.
+---@field plate string
+---@field props string Spalte mit den Fahrzeugeigenschaften.
+---@field model string|nil Spawnname, auf ESX nil (steckt im props-JSON).
+---@field hash string|nil Nur QBCore und Qbox.
+---@field stored string stored auf ESX, state auf QBCore und Qbox.
+---@field garage string
+---@field type string
+---@field job string
+---@field storedIn number Wert, der "in der Garage" bedeutet.
+---@field storedOut number
+
+---Ein Fahrzeug aus der Framework-Tabelle, vereinheitlicht.
+---@class MSKVehicleRow
+---@field plate string
+---@field owner string
+---@field model string|number Spawnname, auf ESX meist ein Hash.
+---@field props table Im Format des laufenden Frameworks, bewusst nicht vereinheitlicht.
+---@field stored boolean
+---@field garage string|nil
+---@field type string|nil
+---@field job string|nil
+---@field ownerName string|nil Nur aus Browse().
+---@field raw table Die unveränderte Datenbankzeile.
+
+---@class MSKVehicleInsert
+---@field owner string Pflicht.
+---@field plate string Pflicht.
+---@field model? string|number
+---@field props? table
+---@field stored? boolean Standard true.
+---@field garage? string
+---@field type? string
+---@field job? string
+---@field license? string Nur QBCore und Qbox.
+
+---@class MSKVehicleBrowseOptions
+---@field page? number Standard 1.
+---@field perPage? number Standard 25, maximal 100.
+---@field query? string Sucht in Kennzeichen, Besitzer und Charaktername.
+---@field garage? string
+---@field type? string
+---@field model? string Spawnname.
+---@field job? string
+---@field owner? string
+
+---@class MSKVehicleBrowseResult
+---@field total number
+---@field page number
+---@field perPage number
+---@field vehicles MSKVehicleRow[]

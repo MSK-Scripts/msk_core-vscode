@@ -18,13 +18,13 @@ Beides ist unabhängig von dieser Extension, sie ergänzen sich.
 
 ## Was abgedeckt ist
 
-Stand msk_core **3.3.1**.
+Stand msk_core **4.0.0**.
 
 - Das globale `MSK` Handle mit allen Modul-Namespaces
 - `MSK.Player` inklusive der Laufzeitfelder, die der 100ms-Thread pflegt
 - Alle Module: Math, String, Table, Vector, Timeout, Callback, Context, Menu,
   Input, Numpad, Progress, TextUI, Coords, Points, Request, Scaleform, Cron,
-  Check, Society, Offline
+  Check, Society, Offline, VehicleStore
 - Die flachen Funktionen aus Ace, Ban, Command, Entities, Notify, Vehicle
   und World
 - Die Backwards-Compat-Aliase aus `aliases.lua` inklusive der abweichenden

@@ -4,7 +4,7 @@
 --- Entsteht in der Consumer-Resource durch
 ---     shared_script '@msk_core/import.lua'
 --- in der fxmanifest.lua. Module werden lazy nachgeladen, sobald sie das erste
---- Mal angefasst werden. Optional laesst sich das vorziehen:
+--- Mal angefasst werden. Optional lässt sich das vorziehen:
 ---     msk_core 'Callback'
 ---     msk_core 'Player'
 ---
@@ -12,10 +12,10 @@
 
 ---@class MSK
 ---@field name string Name der Resource, die MSK importiert hat.
----@field context "client"|"server" Seite, auf der der Code laeuft.
+---@field context "client"|"server" Seite, auf der der Code läuft.
 ---@field Config table Inhalt der config.lua von msk_core.
 ---@field Bridge MSKBridge Erkanntes Framework und Inventory.
----@field LoadedPlayers table Nur Server: geladene Framework-Spieler.
+---@field LoadedPlayers table<number, MSKPlayerData> Nur Server: geladene Spieler, nur innerhalb von msk_core.
 ---@field Player MSKPlayer Lokaler Spieler. Auf dem Server die gespiegelte Tabelle, indiziert per Server-ID.
 ---@field Math MSKMath
 ---@field String MSKString
@@ -37,14 +37,15 @@
 ---@field Check MSKCheck Nur Server.
 ---@field Society MSKSociety Nur Server.
 ---@field Offline MSKOffline Nur Server.
----@overload fun(name: string): any Laedt ein Modul per Name, gleichwertig zu MSK.<Name>.
+---@field VehicleStore MSKVehicleStore Nur Server.
+---@overload fun(name: string): any Lädt ein Modul per Name, gleichwertig zu MSK.<Name>.
 MSK = {}
 
 --------------------------------------------------------------------------------
 -- Basis
 --------------------------------------------------------------------------------
 
----Gibt eine Meldung mit dem Praefix der aufrufenden Resource aus.
+---Gibt eine Meldung mit dem Präfix der aufrufenden Resource aus.
 ---@param code string Typ aus Config.LoggingTypes, etwa "info", "error", "warn", "debug".
 ---@param ... any
 function MSK.Logging(code, ...) end
@@ -54,8 +55,8 @@ function MSK.Logging(code, ...) end
 ---@param ... any
 function MSK.logging(code, ...) end
 
----Fuehrt fn in einem pcall aus und wartet hoechstens timeout ms auf ein Ergebnis.
----Gedacht fuer Exports fremder Resources, die beim Start noch nicht bereit sind.
+---Führt fn in einem pcall aus und wartet höchstens timeout ms auf ein Ergebnis.
+---Gedacht für Exports fremder Resources, die beim Start noch nicht bereit sind.
 ---@param fn fun(): any
 ---@param timeout? number Standard 1000 ms.
 ---@return any
@@ -100,27 +101,49 @@ function MSK.RegisterServerCallback(eventName, cb) end
 -- Spieler und Framework (Bridge)
 --------------------------------------------------------------------------------
 
----Liefert das Framework-Spielerobjekt.
----@param data MSKPlayerQuery|number
----@return table|nil
+---Liefert das Spielerobjekt: vereinheitlichte Daten plus Methoden. Nur Server.
+---Nimmt eine Server-ID, einen Identifier oder eine Query-Tabelle.
+---@param data MSKPlayerQuery|number|string
+---@return MSKPlayerObject|nil
 function MSK.GetPlayer(data) end
 
 ---@param playerId number
----@return table|nil
+---@return MSKPlayerObject|nil
 function MSK.GetPlayerFromId(playerId) end
 
 ---@param identifier string
----@return table|nil
+---@return MSKPlayerObject|nil
 function MSK.GetPlayerFromIdentifier(identifier) end
 
----Nur QBCore.
+---Auf QBCore und Qbox ist die citizenid der Identifier.
 ---@param citizenid string
----@return table|nil
+---@return MSKPlayerObject|nil
 function MSK.GetPlayerByCitizenId(citizenid) end
 
----@param player table|MSKPlayerQuery
+---Auf ESX immer nil, dort hängt keine Telefonnummer am Spieler.
+---@param phone string
+---@return MSKPlayerObject|nil
+function MSK.GetPlayerByPhone(phone) end
+
+---Nur Qbox, auf jedem anderen Framework nil.
+---@param userId number
+---@return MSKPlayerObject|nil
+function MSK.GetPlayerByUserId(userId) end
+
+---Auf dem Client ohne Parameter, dort der eigene Job.
+---@param player? table|MSKPlayerQuery|number|string
 ---@return MSKPlayerJob|nil
 function MSK.GetPlayerJob(player) end
+
+---Auf ESX immer nil, dort gibt es keine Gangs.
+---@param player? table|MSKPlayerQuery|number|string
+---@return MSKPlayerJob|nil
+function MSK.GetPlayerGang(player) end
+
+---Alle Jobs des Spielers als name -> grade. Auf Qbox die echte Multijob-Map.
+---@param player? table|MSKPlayerQuery|number|string
+---@return table<string, number>
+function MSK.GetPlayerJobs(player) end
 
 ---@param playerId number
 ---@return MSKPlayerJob|nil
@@ -134,49 +157,76 @@ function MSK.GetPlayerJobFromIdentifier(identifier) end
 ---@return MSKPlayerJob|nil
 function MSK.GetPlayerJobByCitizenId(citizenid) end
 
----Liefert alle geladenen Spieler, optional gefiltert. Nur Server.
----@param key? string Feld, nach dem gefiltert wird, etwa "job".
+---Alle Job-Definitionen des Frameworks, keine Spieler. Client und Server.
+---Auf dem Client ein Callback-Roundtrip, also nur aus einem Thread heraus.
+---@return table<string, MSKJobDefinition>
+function MSK.GetJobs() end
+
+---Wie GetJobs, für Gangs. Auf ESX leer.
+---@return table<string, MSKJobDefinition>
+function MSK.GetGangs() end
+
+---Liefert alle geladenen Spieler als Daten ohne Methoden, optional gefiltert.
+---Nur Server.
+---@param key? "job"|"gang"|"group"
 ---@param val? any Wert, auf den gefiltert wird.
----@return table[]
+---@return MSKPlayerData[]
 function MSK.GetPlayers(key, val) end
+
+---Vereinheitlichte Daten des lokalen Spielers, nil solange kein Charakter
+---geladen ist. Nur Client.
+---@return MSKPlayerData|nil
+function MSK.GetPlayerData() end
+
+---Nur Client.
+---@return boolean
+function MSK.IsPlayerLoaded() end
+
+---Berücksichtigt visn_are und osp_ambulance, falls gestartet. Nur Client.
+---@return boolean
+function MSK.IsPlayerDead() end
 
 ---Liefert den gespiegelten Spielerdatensatz aus dem Core. Nur Server.
 ---@param id number
 ---@return table|nil
 function MSK.GetMirroredPlayer(id) end
 
----@param Player table Framework-Spielerobjekt.
----@return string
-function MSK.GetPlayerIdentifier(Player) end
+---@param id number|string|MSKPlayerQuery
+---@return string|nil
+function MSK.GetPlayerIdentifier(id) end
 
----@param Player table Framework-Spielerobjekt.
----@return number
-function MSK.GetPlayerServerId(Player) end
+---@param id number|string|MSKPlayerQuery
+---@return number|nil
+function MSK.GetPlayerServerId(id) end
 
 --------------------------------------------------------------------------------
 -- Inventory
 --------------------------------------------------------------------------------
 
----Prueft, ob der Spieler einen Gegenstand besitzt. Laeuft ueber die
----konfigurierte Inventory-Bridge.
+---Prüft, ob der Spieler einen Gegenstand besitzt. Läuft über die
+---konfigurierte Inventory-Bridge. Auf dem Server ist der erste Parameter die
+---Server-ID. Steht an dritter Stelle eine Tabelle, wird sie als metadata
+---gelesen und count übersprungen.
 ---@param itemName string
----@param amount? number Mindestmenge, Standard 1.
----@return boolean
----@overload fun(playerId: number, itemName: string, amount?: number): boolean
-function MSK.HasItem(itemName, amount) end
-
----Nur Server.
----@param playerId number
----@param itemName string
+---@param count? number Mindestmenge, Standard 1.
 ---@param metadata? table Nur bei Inventories mit Metadaten.
----@return boolean
-function MSK.HasPlayerItem(playerId, itemName, metadata) end
+---@return table|false
+---@overload fun(playerId: number, itemName: string|string[], count?: number, metadata?: table): table|false
+function MSK.HasItem(itemName, count, metadata) end
+
+---Nimmt dieselben ID-Formen wie MSK.GetPlayer. Nur Server.
+---@param id number|string|MSKPlayerQuery
+---@param itemName string|string[]
+---@param count? number Mindestmenge, Standard 1.
+---@param metadata? table Nur bei Inventories mit Metadaten.
+---@return table|false
+function MSK.HasPlayerItem(id, itemName, count, metadata) end
 
 --------------------------------------------------------------------------------
 -- Commands
 --------------------------------------------------------------------------------
 
----Registriert einen Chat-Befehl inklusive Vorschlag und Rechtepruefung.
+---Registriert einen Chat-Befehl inklusive Vorschlag und Rechteprüfung.
 ---Client: RegisterCommand(name, cb, restricted, properties).
 ---Server: RegisterCommand(name, cb, properties).
 ---@param commandName string
@@ -190,7 +240,7 @@ function MSK.RegisterCommand(commandName, callback, restricted, properties) end
 -- ACE
 --------------------------------------------------------------------------------
 
----Prueft ein ACE-Recht. Client ohne, Server mit Spieler-ID.
+---Prüft ein ACE-Recht. Client ohne, Server mit Spieler-ID.
 ---@param command string
 ---@return boolean
 ---@overload fun(playerId: number, command: string): boolean
@@ -250,13 +300,13 @@ function MSK.IsPlayerBanned(playerId) end
 
 ---Sperrt einen Spieler. Die Zeitangabe kennt die Suffixe M, H, D und W,
 ---etwa "30M", "12H", "7D", "2W". Ohne Suffix gilt der Bann als permanent.
----@param playerId number Ausfuehrender Spieler, 0 fuer Konsole.
+---@param playerId number Ausführender Spieler, 0 für Konsole.
 ---@param targetId number Zu sperrender Spieler.
 ---@param time string|number
 ---@param reason? string
 function MSK.BanPlayer(playerId, targetId, time, reason) end
 
----@param playerId number Ausfuehrender Spieler.
+---@param playerId number Ausführender Spieler.
 ---@param banId number ID des Bann-Eintrags.
 function MSK.UnbanPlayer(playerId, banId) end
 
@@ -393,7 +443,7 @@ function MSK.GetVehicleLabel(vehicle, model) end
 ---@return string
 function MSK.GetVehicleLabelFromModel(model) end
 
----Schliesst alle Tueren. Nur Client.
+---Schließt alle Türen. Nur Client.
 ---@param vehicle number
 function MSK.CloseVehicleDoors(vehicle) end
 
@@ -401,7 +451,7 @@ function MSK.CloseVehicleDoors(vehicle) end
 -- World
 --------------------------------------------------------------------------------
 
----Prueft, ob an der Position kein Fahrzeug oder Ped steht.
+---Prüft, ob an der Position kein Fahrzeug oder Ped steht.
 ---@param coords vector3
 ---@param maxDistance? number
 ---@return boolean
@@ -520,7 +570,7 @@ function MSK.Table_Contains(tbl, val) end
 function MSK.DumpTable(tbl) end
 
 ---Achtung: MSK.Trim nutzt die invertierte Bool-Semantik aus v2
----(String.TrimLegacy), waehrend exports.msk_core:Trim auf String.Trim zeigt.
+---(String.TrimLegacy), während exports.msk_core:Trim auf String.Trim zeigt.
 ---@param str string
 ---@param bool? boolean
 ---@return string
@@ -544,7 +594,7 @@ function MSK.DoesShowCoords() end
 --------------------------------------------------------------------------------
 -- Export-Proxies
 -- Jeder Name, der weder Modul noch Alias ist, wird von import.lua automatisch
--- auf exports.msk_core:<Name> weitergeleitet. Die gebraeuchlichsten davon:
+-- auf exports.msk_core:<Name> weitergeleitet. Die gebräuchlichsten davon:
 --------------------------------------------------------------------------------
 
 ---@param length number
@@ -807,7 +857,7 @@ function MSK.TrafficMovie(duration) end
 ---@overload fun(playerId: number, title: string, text: string, typ?: string, duration?: number)
 function MSK.ScaleformAnnounce(title, text, typ, duration) end
 
----Prueft die Resource-Version gegen GitHub. Nur Server.
+---Prüft die Resource-Version gegen GitHub. Nur Server.
 ---@param repo MSKCheckRepo|string
 function MSK.CheckVersion(repo) end
 

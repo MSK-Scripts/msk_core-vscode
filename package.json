@@ -1,7 +1,7 @@
 {
   "name": "msk-core-lua",
   "displayName": "MSK Core (FiveM) IntelliSense",
-  "description": "IntelliSense, Autocompletion und Typen fuer die MSK.* API der msk_core Library (FiveM).",
+  "description": "IntelliSense, Autocompletion und Typen für die MSK.* API der msk_core Library (FiveM).",
   "version": "1.0.0",
   "publisher": "musiker15",
   "license": "MIT",

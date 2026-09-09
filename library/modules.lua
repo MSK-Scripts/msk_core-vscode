@@ -1,6 +1,6 @@
 ---@meta
 --- Modul-Namespaces der msk_core Library (FiveM).
---- Erreichbar als MSK.<Modul>, geladen per Lazy-Loading ueber import.lua.
+--- Erreichbar als MSK.<Modul>, geladen per Lazy-Loading über import.lua.
 ---
 --- Wo sich Client und Server unterscheiden, steht die Client-Signatur als
 --- Hauptsignatur und die Server-Signatur als @overload. Auf dem Server nimmt
@@ -37,12 +37,12 @@ function Math.Comma(int, tag) end
 ---@class MSKString
 local String = {}
 
----Erzeugt eine zufaellige Zeichenkette.
+---Erzeugt eine zufällige Zeichenkette.
 ---@param length number
 ---@return string
 function String.Random(length) end
 
----Prueft, ob str mit startStr beginnt.
+---Prüft, ob str mit startStr beginnt.
 ---@param str string
 ---@param startStr string
 ---@return boolean
@@ -50,12 +50,12 @@ function String.StartsWith(str, startStr) end
 
 ---Entfernt Leerzeichen.
 ---@param str string
----@param bool? boolean true entfernt alle Leerzeichen, sonst nur aussen.
+---@param bool? boolean true entfernt alle Leerzeichen, sonst nur außen.
 ---@return string
 function String.Trim(str, bool) end
 
 ---Wie Trim, aber mit der invertierten Bool-Semantik aus msk_core v2.
----Erreichbar als MSK.Trim, waehrend exports.msk_core:Trim auf String.Trim zeigt.
+---Erreichbar als MSK.Trim, während exports.msk_core:Trim auf String.Trim zeigt.
 ---@param str string
 ---@param bool? boolean
 ---@return string
@@ -83,25 +83,25 @@ function Table.Contains(tbl, val) end
 ---@param tbl table
 function Table.Dump(tbl) end
 
----Wie Dump, liefert die Ausgabe aber als Zeichenkette zurueck.
+---Wie Dump, liefert die Ausgabe aber als Zeichenkette zurück.
 ---@param tbl table
----@param n? number Einrueckungstiefe.
+---@param n? number Einrückungstiefe.
 ---@return string
 function Table.DumpString(tbl, n) end
 
----Zaehlt alle Eintraege, auch bei nicht fortlaufenden Schluesseln.
+---Zählt alle Einträge, auch bei nicht fortlaufenden Schlüsseln.
 ---@param tbl table
 ---@return number
 function Table.Size(tbl) end
 
 ---@param tbl table
 ---@param val any
----@return any key Schluessel des ersten Treffers.
+---@return any key Schlüssel des ersten Treffers.
 function Table.Index(tbl, val) end
 
 ---@param tbl table
 ---@param val any
----@return any key Schluessel des letzten Treffers.
+---@return any key Schlüssel des letzten Treffers.
 function Table.LastIndex(tbl, val) end
 
 ---@param tbl table
@@ -151,18 +151,18 @@ function Vector.TableToVector(coords, toType) end
 ---@class MSKTimeout
 local Timeout = {}
 
----Fuehrt cb nach ms Millisekunden aus.
+---Führt cb nach ms Millisekunden aus.
 ---@param ms number
 ---@param cb fun(data: any)
----@param data? any Wird an cb uebergeben.
----@return number requestId ID fuer Timeout.Clear.
+---@param data? any Wird an cb übergeben.
+---@return number requestId ID für Timeout.Clear.
 function Timeout.Set(ms, cb, data) end
 
 ---Bricht einen laufenden Timeout ab.
 ---@param requestId number
 function Timeout.Clear(requestId) end
 
----Wartet, bis cb einen Wert ungleich nil liefert, hoechstens aber timeout ms.
+---Wartet, bis cb einen Wert ungleich nil liefert, höchstens aber timeout ms.
 ---@param timeout number
 ---@param cb fun(): any
 ---@param errMessage? string Meldung beim Auslaufen.
@@ -201,32 +201,32 @@ function Callback.TriggerCallback(eventName, ...) end
 --------------------------------------------------------------------------------
 
 ---@class MSKContext
----@overload fun(idOrData: string|MSKContextData) Kurzform fuer Show.
+---@overload fun(idOrData: string|MSKContextData) Kurzform für Show.
 local Context = {}
 
----Registriert ein Kontextmenue unter einer ID. Nur Client.
+---Registriert ein Kontextmenü unter einer ID. Nur Client.
 ---@param id string
 ---@param data MSKContextData
 function Context.Register(id, data) end
 
----Oeffnet ein Kontextmenue, per ID oder als Inline-Definition.
+---Öffnet ein Kontextmenü, per ID oder als Inline-Definition.
 ---Auf dem Server wird die Ziel-Spieler-ID vorangestellt.
 ---@param idOrData string|MSKContextData
 ---@overload fun(playerId: number, idOrData: string|MSKContextData)
 function Context.Show(idOrData) end
 
----Aendert einen einzelnen Eintrag eines offenen Menues. Nur Client.
+---Ändert einen einzelnen Eintrag eines offenen Menüs. Nur Client.
 ---@param contextId string
 ---@param dataId string ID der Option.
 ---@param updatedData MSKContextOption
 function Context.Update(contextId, dataId, updatedData) end
 
----Schliesst das Kontextmenue.
----@param fireExit? boolean Loest onExit aus.
+---Schließt das Kontextmenü.
+---@param fireExit? boolean Löst onExit aus.
 ---@overload fun(playerId: number)
 function Context.Hide(fireExit) end
 
----Liefert die ID des offenen Kontextmenues. Nur Client.
+---Liefert die ID des offenen Kontextmenüs. Nur Client.
 ---@return string|nil
 function Context.GetOpen() end
 
@@ -235,29 +235,29 @@ function Context.GetOpen() end
 --------------------------------------------------------------------------------
 
 ---@class MSKMenu
----@overload fun(idOrData: string|MSKMenuData) Kurzform fuer Show.
+---@overload fun(idOrData: string|MSKMenuData) Kurzform für Show.
 local Menu = {}
 
----Registriert ein Menue unter einer ID. Nur Client.
+---Registriert ein Menü unter einer ID. Nur Client.
 ---@param id string
 ---@param data MSKMenuData
 function Menu.Register(id, data) end
 
----Oeffnet ein Menue, per ID oder als Inline-Definition. Nur Client.
+---Öffnet ein Menü, per ID oder als Inline-Definition. Nur Client.
 ---@param idOrData string|MSKMenuData
 function Menu.Show(idOrData) end
 
----Aendert einen einzelnen Eintrag eines offenen Menues. Nur Client.
+---Ändert einen einzelnen Eintrag eines offenen Menüs. Nur Client.
 ---@param menuId string
 ---@param dataId string
 ---@param updatedData MSKMenuItem
 function Menu.Update(menuId, dataId, updatedData) end
 
----Schliesst das Menue. Nur Client.
+---Schließt das Menü. Nur Client.
 ---@param key? string
 function Menu.Hide(key) end
 
----Liefert die ID des offenen Menues. Nur Client.
+---Liefert die ID des offenen Menüs. Nur Client.
 ---@return string|nil
 function Menu.GetOpen() end
 
@@ -269,15 +269,15 @@ function Menu.GetOpen() end
 ---@overload fun(header: string, placeholder?: string, field?: boolean, cb?: fun(value: string|nil))
 local Input = {}
 
----Oeffnet das Eingabefeld.
+---Öffnet das Eingabefeld.
 ---@param header string
 ---@param placeholder? string
 ---@param field? boolean true macht daraus ein Passwortfeld.
----@param cb? fun(value: string|nil) Erhaelt nil beim Abbrechen.
+---@param cb? fun(value: string|nil) Erhält nil beim Abbrechen.
 ---@overload fun(playerId: number, header: string, placeholder?: string, field?: boolean)
 function Input.Open(header, placeholder, field, cb) end
 
----Schliesst das Eingabefeld.
+---Schließt das Eingabefeld.
 ---@overload fun(playerId: number)
 function Input.Close() end
 
@@ -293,14 +293,14 @@ function Input.Active() end
 ---@overload fun(pin: string|number, showPin?: boolean, cb?: fun(success: boolean))
 local Numpad = {}
 
----Oeffnet das Nummernfeld zur PIN-Eingabe.
+---Öffnet das Nummernfeld zur PIN-Eingabe.
 ---@param pin string|number Der erwartete Code.
 ---@param showPin? boolean Zeigt den Code im Feld an.
 ---@param cb? fun(success: boolean)
 ---@overload fun(playerId: number, pin: string|number, showPin?: boolean)
 function Numpad.Open(pin, showPin, cb) end
 
----Schliesst das Nummernfeld.
+---Schließt das Nummernfeld.
 ---@overload fun(playerId: number)
 function Numpad.Close() end
 
@@ -328,7 +328,7 @@ function Progress.Start(data, text, color) end
 ---@overload fun(playerId: number)
 function Progress.Stop() end
 
----Ob gerade eine Progressbar laeuft. Nur Client.
+---Ob gerade eine Progressbar läuft. Nur Client.
 ---@return boolean
 function Progress.Active() end
 
@@ -393,7 +393,7 @@ function Coords.Copy(coords) end
 ---@class MSKPoints
 local Points = {}
 
----Legt einen Point an, der onEnter und onExit im Radius ausloest.
+---Legt einen Point an, der onEnter und onExit im Radius auslöst.
 ---@param properties MSKPointProperties
 ---@return MSKPoint
 function Points.Add(properties) end
@@ -417,10 +417,10 @@ function Points.GetClosestPoint() end
 ---@overload fun(request: function, hasLoaded: function, assetType: string, asset: any, timeout?: number, ...: any): boolean
 local Request = {}
 
----Generischer Streaming-Loader. Basis der uebrigen Request-Funktionen.
----@param request function Native, die das Laden anstoesst.
----@param hasLoaded function Native, die den Ladezustand prueft.
----@param assetType string Bezeichnung fuer die Fehlermeldung.
+---Generischer Streaming-Loader. Basis der übrigen Request-Funktionen.
+---@param request function Native, die das Laden anstößt.
+---@param hasLoaded function Native, die den Ladezustand prüft.
+---@param assetType string Bezeichnung für die Fehlermeldung.
 ---@param asset any
 ---@param timeout? number Standard 1000 ms.
 ---@param ... any
@@ -509,13 +509,13 @@ function Scaleform.ScaleformAnnounce(title, text, typ, duration) end
 local Cron = {}
 
 ---Legt einen Cron-Job an. Auch als MSK.CreateCron erreichbar.
----@param date MSKCronDate Zeitpunkt, zu dem cb laeuft.
----@param data any Wird an cb uebergeben.
+---@param date MSKCronDate Zeitpunkt, zu dem cb läuft.
+---@param data any Wird an cb übergeben.
 ---@param cb fun(data: any)
----@return string uniqueId ID fuer Cron.Delete.
+---@return string uniqueId ID für Cron.Delete.
 function Cron.Create(date, data, cb) end
 
----Loescht einen Cron-Job. Auch als MSK.DeleteCron erreichbar.
+---Löscht einen Cron-Job. Auch als MSK.DeleteCron erreichbar.
 ---@param id string
 ---@return boolean
 function Cron.Delete(id) end
@@ -525,14 +525,14 @@ function Cron.Delete(id) end
 --------------------------------------------------------------------------------
 
 ---@class MSKCheck
----@overload fun(repo: MSKCheckRepo|string) Kurzform fuer Version.
+---@overload fun(repo: MSKCheckRepo|string) Kurzform für Version.
 local Check = {}
 
 ---Vergleicht die Resource-Version mit dem neuesten GitHub-Release.
 ---@param repo MSKCheckRepo|string
 function Check.Version(repo) end
 
----Prueft, ob eine andere Resource laeuft und die Mindestversion erfuellt.
+---Prüft, ob eine andere Resource läuft und die Mindestversion erfüllt.
 ---@param resource string
 ---@param minimumVersion? string
 ---@param showMessage? boolean
@@ -543,8 +543,14 @@ function Check.Dependency(resource, minimumVersion, showMessage) end
 -- Society (nur Server)
 --------------------------------------------------------------------------------
 
+---Firmenkonten folgen seit 4.0.0 der Banking-Resource, nicht dem Framework:
+---Renewed-Banking, qb-banking, qb-management oder esx_addonaccount.
 ---@class MSKSociety
 local Society = {}
+
+---Welche Banking-Resource erkannt wurde, nil wenn keine läuft.
+---@return string|nil
+function Society.GetProvider() end
 
 ---@param society string Name des Firmenkontos.
 ---@return number
@@ -581,3 +587,58 @@ function Offline.AddBank(identifier, amount) end
 ---@param amount number
 ---@return boolean
 function Offline.RemoveBank(identifier, amount) end
+
+---Charaktertabelle des laufenden Frameworks plus Schlüsselspalte.
+---ESX: users/identifier. QBCore und Qbox: players/citizenid.
+---@return { table: string, identifier: string }|nil
+function Offline.GetPlayerTable() end
+
+--------------------------------------------------------------------------------
+-- VehicleStore (nur Server)
+--
+-- Eine Form über der Fahrzeugtabelle des laufenden Frameworks. Die
+-- Fahrzeugeigenschaften bleiben bewusst im Framework-Format, weil jede andere
+-- Garage auf dem Server dieselbe Spalte liest.
+--------------------------------------------------------------------------------
+
+---@class MSKVehicleStore
+local VehicleStore = {}
+
+---Tabellen- und Spaltennamen des laufenden Frameworks, als Kopie.
+---Außerhalb eines Threads aufrufen, sonst läuft die erste Query noch gegen
+---den eigenen Fallback.
+---@return MSKVehicleSchema|nil
+function VehicleStore.GetSchema() end
+
+---@param plate string
+---@return MSKVehicleRow|nil
+function VehicleStore.GetByPlate(plate) end
+
+---@param plate string
+---@return number
+function VehicleStore.CountByPlate(plate) end
+
+---@param data MSKVehicleInsert
+---@return boolean
+function VehicleStore.Insert(data) end
+
+---Aktualisiert einzelne Felder. Die Schlüssel sind die vereinheitlichten
+---Namen (owner, garage, type, job, stored, props), nicht die Spaltennamen.
+---@param plate string
+---@param fields table
+---@return boolean
+function VehicleStore.Update(plate, fields) end
+
+---Schreibt ein echtes NULL in die Job-Spalte. Update überspringt nil-Werte.
+---@param plate string
+---@return boolean
+function VehicleStore.ClearJob(plate) end
+
+---@param plate string
+---@return boolean true nur, wenn wirklich eine Zeile entfernt wurde.
+function VehicleStore.Delete(plate) end
+
+---Seitenweise und in SQL gefiltert.
+---@param opts MSKVehicleBrowseOptions
+---@return MSKVehicleBrowseResult
+function VehicleStore.Browse(opts) end
