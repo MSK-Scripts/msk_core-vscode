@@ -18,13 +18,17 @@ Beides ist unabhängig von dieser Extension, sie ergänzen sich.
 
 ## Was abgedeckt ist
 
-Stand msk_core **4.0.0**.
+Stand msk_core **4.1.0**.
 
 - Das globale `MSK` Handle mit allen Modul-Namespaces
 - `MSK.Player` inklusive der Laufzeitfelder, die der 100ms-Thread pflegt
 - Alle Module: Math, String, Table, Vector, Timeout, Callback, Context, Menu,
   Input, Numpad, Progress, TextUI, Coords, Points, Request, Scaleform, Cron,
   Check, Society, Offline, VehicleStore
+- Die Module aus 4.1.0: Alert, Anim, Array, Cache, Class, Clipboard, Controls,
+  Dui, Events, Files, Grid, Hook, Keybind, Locale, Logger, Marker, Print,
+  Radial, Require, Selector, Settings, Skillcheck, Timer, TxAdmin,
+  VehicleProperties und Zones
 - Die flachen Funktionen aus Ace, Ban, Command, Entities, Notify, Vehicle
   und World
 - Die Backwards-Compat-Aliase aus `aliases.lua` inklusive der abweichenden
@@ -40,9 +44,13 @@ Hauptsignatur und die Server-Variante eine Überladung. Auf dem Server nimmt
 fast jede UI-Funktion die Ziel-Spieler-ID als erstes Argument:
 
 ```lua
-MSK.Notification('Titel', 'Text', 'success')        -- Client
-MSK.Notification(source, 'Titel', 'Text', 'success') -- Server
+MSK.Notification({ title = 'Titel', message = 'Text', type = 'success' })         -- Client
+MSK.Notification(source, { title = 'Titel', message = 'Text', type = 'success' }) -- Server
 ```
+
+Seit msk_core 4.1.0 nehmen die UI-Funktionen eine Tabelle. Die alten
+Parameter-Formen funktionieren weiter und sind als veraltet markiert, der
+Language Server streicht sie in der Vorschlagsliste durch.
 
 Der Language Server akzeptiert beide Formen. Eine Trennung nach Seite ist
 nicht möglich, solange Client- und Server-Dateien im selben Workspace liegen.
@@ -112,10 +120,15 @@ msk_core-vscode/
 ├── logo.png
 └── library/
     ├── config.json    Macht den Ordner zusätzlich zum LuaLS-Addon
-    ├── types.lua      Datenstrukturen und Optionstabellen
-    ├── modules.lua    Modul-Namespaces (MSK.Math, MSK.Context, ...)
-    └── msk.lua        Das MSK Handle und die flachen Funktionen
+    ├── types.lua        Datenstrukturen und Optionstabellen
+    ├── types_new.lua    Typen der Module aus 4.1.0
+    ├── modules.lua      Modul-Namespaces (MSK.Math, MSK.Context, ...)
+    ├── modules_new.lua  Module aus 4.1.0 (MSK.Alert, MSK.Zones, ...)
+    └── msk.lua          Das MSK Handle und die flachen Funktionen
 ```
+
+Der Language Server liest den ganzen Ordner. Neue Dateien in `library/`
+werden ohne weitere Konfiguration eingebunden.
 
 Die Definitionen liegen bewusst direkt im Extension-Ordner und werden von dort
 referenziert. `cfxlua-vscode` verschiebt sie stattdessen beim ersten Start nach

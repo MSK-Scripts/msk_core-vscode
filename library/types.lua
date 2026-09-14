@@ -1,6 +1,6 @@
 ---@meta
 --- Gemeinsame Datenstrukturen der msk_core Library (FiveM).
---- Quelle: bridge/ und modules/*/ in msk_core 4.0.0
+--- Quelle: bridge/ und modules/*/ in msk_core 4.1.0
 
 --------------------------------------------------------------------------------
 -- Player
@@ -32,35 +32,68 @@ local MSKPlayer = {}
 ---@return any
 function MSKPlayer.Get(playerId, key) end
 
+---Ruft cb auf, sobald sich ein Feld ändert, etwa ped, vehicle, seat, weapon,
+---isDead oder ein eigenes Feld. Auch als MSK.OnPlayer erreichbar.
+---Client: cb(value, oldValue) für den lokalen Spieler.
+---Server: cb(playerId, value, oldValue) für jeden Spieler.
+---Das Ergebnis an RemoveEventHandler übergeben, um nicht mehr zuzuhören.
+---@param key string
+---@param cb fun(value: any, oldValue: any)
+---@return table eventData
+---@overload fun(key: string, cb: fun(playerId: number, value: any, oldValue: any)): table
+function MSKPlayer.OnChange(key, cb) end
+
 --------------------------------------------------------------------------------
 -- Notify
 --------------------------------------------------------------------------------
 
+---Die Typen kommen aus Config.NotifyTypes, eigene Einträge sind möglich.
 ---@alias MSKNotifyType string
+---| "general"
 ---| "info"
 ---| "success"
 ---| "error"
 ---| "warning"
 
 --------------------------------------------------------------------------------
+-- Gemeinsam genutzt
+--------------------------------------------------------------------------------
+
+---Animationen für FontAwesome-Icons in Context, Menu und TextUI.
+---@alias MSKIconAnimation string
+---| "spin"
+---| "spinPulse"
+---| "spinReverse"
+---| "beat"
+---| "beatFade"
+---| "bounce"
+---| "fade"
+---| "flip"
+---| "shake"
+
+--------------------------------------------------------------------------------
 -- Points
 --------------------------------------------------------------------------------
 
 ---@class MSKPointProperties
----@field coords vector3|table Mittelpunkt des Points.
+---@field coords vector3|vector4|table Mittelpunkt des Points, wird zu vector3.
 ---@field distance number Radius, ab dem onEnter ausgelöst wird.
 ---@field onEnter? fun(point: MSKPoint)
----@field onExit? fun(point: MSKPoint)
+---@field onExit? fun(point: MSKPoint) Läuft auch, wenn der Point entfernt wird, während der Spieler drin ist.
 ---@field onRemove? fun(point: MSKPoint)
+---@field nearby? fun(point: MSKPoint) Läuft in jedem Frame, solange der Spieler im Radius ist.
+---@field [string] any Eigene Felder bleiben am Point erhalten.
 
 ---Ein registrierter Point. Enthält alle übergebenen Properties plus die
 ---Laufzeitfelder, die der Point-Thread pflegt.
 ---@class MSKPoint : MSKPointProperties
 ---@field id number Fortlaufende ID, von Points.Add vergeben.
+---@field coords vector3
 ---@field inside boolean Ob der Spieler gerade im Radius ist.
 ---@field currentDistance number|nil Distanz zum Spieler, nur während inside.
 ---@field isClosest boolean Ob dies der nächstgelegene Point ist.
----@field Remove fun() Entfernt diesen Point.
+---@field owner string|nil Resource, die den Point über den Export angelegt hat.
+---@field Remove fun() Entfernt diesen Point, als point.Remove() und point:Remove().
 
 --------------------------------------------------------------------------------
 -- Progress
@@ -69,7 +102,7 @@ function MSKPlayer.Get(playerId, key) end
 ---@class MSKProgressAnimation
 ---@field dict? string Animations-Dictionary, wird automatisch geladen.
 ---@field anim? string Name der Animation innerhalb des Dictionaries.
----@field clip? string Clip, der beim Stoppen abgeräumt wird.
+---@field clip? string Gleichbedeutend mit anim.
 ---@field blendIn? number Standard 3.0
 ---@field blendOut? number Standard 1.0
 ---@field duration? number Standard -1 (läuft bis zum Stopp).
@@ -81,58 +114,85 @@ function MSKPlayer.Get(playerId, key) end
 ---@field scenario? string Alternative zu dict/anim: Szenario statt Animation.
 ---@field playEnter? boolean Nur bei scenario, Standard true.
 
+---Ein Objekt, das für die Dauer der Progressbar an den Ped gehängt wird.
+---@class MSKProgressProp
+---@field model string|number
+---@field bone? number Standard 60309.
+---@field pos? vector3|table Versatz zum Knochen.
+---@field rot? vector3|table Rotation zum Knochen.
+---@field rotOrder? number Standard 0.
+
 ---@class MSKProgressDisable
 ---@field mouse? boolean Blockiert Mausbewegung.
 ---@field move? boolean Blockiert Bewegung.
 ---@field sprint? boolean Blockiert nur Sprinten (greift nicht zusammen mit move).
 ---@field vehicle? boolean Blockiert Fahrzeugsteuerung.
+---@field car? boolean Gleichbedeutend mit vehicle.
 ---@field combat? boolean Blockiert Angriff und Zielen.
 
 ---@class MSKProgressData
----@field duration number Laufzeit in Millisekunden.
+---@field duration number Laufzeit in Millisekunden, Standard 1000.
 ---@field text? string Beschriftung der Leiste.
+---@field label? string Gleichbedeutend mit text.
 ---@field color? string Farbe, sonst Config.ProgressColor.
+---@field type? "bar"|"circle" Darstellung bei Progress.Start, Standard Leiste.
+---@field position? "middle"|"bottom" Standard bottom bei der Leiste, middle beim Kreis.
+---@field canCancel? boolean Abbrechen mit X, in den FiveM-Tastenbelegungen änderbar.
 ---@field forceOverride? boolean Bricht eine laufende Progressbar ab und startet neu.
----@field useWhileDead? boolean Erlaubt den Start im Tod, Standard false.
----@field useWhileRagdoll? boolean Erlaubt den Start im Ragdoll, Standard false.
----@field useWhileCuffed? boolean Erlaubt den Start in Handschellen, Standard false.
----@field useWhileFalling? boolean Erlaubt den Start im Fallen, Standard false.
----@field useWhileSwimming? boolean Erlaubt den Start im Wasser, Standard false.
+---@field useWhileDead? boolean Läuft auch im Tod weiter, Standard false.
+---@field useWhileRagdoll? boolean Läuft auch im Ragdoll weiter, Standard false.
+---@field useWhileCuffed? boolean Läuft auch in Handschellen weiter, Standard false.
+---@field useWhileFalling? boolean Läuft auch im Fallen weiter, Standard false.
+---@field useWhileSwimming? boolean Läuft auch im Wasser weiter, Standard false.
+---@field allowRagdoll? boolean Gleichbedeutend mit useWhileRagdoll.
+---@field allowCuffed? boolean Gleichbedeutend mit useWhileCuffed.
+---@field allowFalling? boolean Gleichbedeutend mit useWhileFalling.
+---@field allowSwimming? boolean Gleichbedeutend mit useWhileSwimming.
 ---@field animation? MSKProgressAnimation
+---@field anim? MSKProgressAnimation Gleichbedeutend mit animation.
+---@field prop? MSKProgressProp|MSKProgressProp[] Ein Objekt oder eine Liste davon.
 ---@field disable? MSKProgressDisable
 
 --------------------------------------------------------------------------------
 -- Context (Maus-Menü mit Drilldown)
 --------------------------------------------------------------------------------
 
+---Eine Zeile im Tooltip einer Option.
+---@class MSKContextMetadata
+---@field label string
+---@field value? any Wird als Text angezeigt.
+---@field progress? number 0 bis 100.
+---@field colorScheme? string
+
 ---@class MSKContextOption
----@field id? string
+---@field id? string Bei einer Options-Map der Schlüssel, wenn nicht gesetzt.
 ---@field title? string
 ---@field description? string
 ---@field icon? string FontAwesome-Klasse.
 ---@field iconColor? string
+---@field iconAnimation? MSKIconAnimation
 ---@field image? string
 ---@field arrow? boolean Wird automatisch true, wenn menu gesetzt ist.
 ---@field disabled? boolean
 ---@field readOnly? boolean Eintrag ist sichtbar, aber nicht anwählbar.
 ---@field progress? number Fortschrittsbalken im Eintrag, 0 bis 100.
 ---@field colorScheme? string
----@field metadata? table Zusatzinfos, die als Tooltip erscheinen.
+---@field metadata? (string|MSKContextMetadata)[]|table<string, any> Liste von Texten, Liste von Zeilen oder Map label = value.
 ---@field menu? string ID des Kontextmenüs, in das gesprungen wird.
 ---@field args? any Wird an onSelect, event und serverEvent weitergereicht.
----@field onSelect? fun(args: any) Läuft nur bei registrierten Menüs.
+---@field onSelect? fun(args: any) Überlebt das Netzwerk nicht.
 ---@field event? string Client-Event, das beim Auswählen gefeuert wird.
 ---@field serverEvent? string Server-Event, das beim Auswählen gefeuert wird.
 
 ---@class MSKContextData
 ---@field id? string Pflicht bei Register, bei Show optional (dann inline).
 ---@field title? string
----@field options MSKContextOption[]
+---@field options MSKContextOption[]|table<string, MSKContextOption> Liste, oder Map nach ID (sortiert nach Schlüssel).
 ---@field canClose? boolean Standard true.
----@field position? string Standard 'center'.
+---@field position? string Standard 'center'. Auch left, right, top, bottom, top-left und so weiter.
 ---@field menu? string Übergeordnetes Menü, erzeugt den Zurück-Pfeil.
 ---@field onBack? fun() Läuft beim Sprung zum übergeordneten Menü.
----@field onExit? fun() Läuft beim Schließen, wenn Hide(true) aufgerufen wird.
+---@field onExit? fun() Läuft beim Schließen durch den Spieler oder Hide(true).
 
 --------------------------------------------------------------------------------
 -- Menu (Tastatur, NativeUI-Stil)
@@ -142,28 +202,233 @@ function MSKPlayer.Get(playerId, key) end
 ---@field label string
 ---@field description? string
 
+---Läuft, wenn ein Eintrag mit Enter bestätigt wird.
+---@alias MSKMenuCallback fun(selected: number, scrollIndex?: number, args?: any, checked?: boolean)
+
 ---@class MSKMenuItem
 ---@field id? string
 ---@field label? string
 ---@field description? string
 ---@field icon? string
 ---@field iconColor? string
----@field disabled? boolean
----@field checked? boolean Macht den Eintrag zur Checkbox.
+---@field iconAnimation? MSKIconAnimation
+---@field disabled? boolean Wird beim Navigieren übersprungen.
+---@field checked? boolean Macht den Eintrag zur Checkbox, Enter schaltet um und das Menü bleibt offen.
 ---@field progress? number 0 bis 100.
 ---@field colorScheme? string
 ---@field values? (string|MSKMenuValue)[] Macht den Eintrag horizontal scrollbar.
+---@field defaultIndex? number Startwert in values, Standard 1.
+---@field close? boolean false lässt das Menü nach dem Bestätigen offen.
 ---@field args? any Wird an die Callbacks weitergereicht.
 ---@field onSelect? fun(args: any)
+---@field event? string Client-Event beim Bestätigen.
+---@field serverEvent? string Server-Event beim Bestätigen.
 
 ---@class MSKMenuData
 ---@field id? string Pflicht bei Register, bei Show optional (dann inline).
 ---@field title? string
 ---@field position? string Standard 'top-left'.
 ---@field items MSKMenuItem[]
----@field onSelected? fun(selected: number, item: MSKMenuItem, args: any)
----@field onSideScroll? fun(selected: number, valueIndex: number, args: any)
+---@field options? MSKMenuItem[] Gleichbedeutend mit items.
+---@field canClose? boolean Standard true. false sperrt Backspace und Escape.
+---@field disableInput? boolean Das Menü reagiert nicht auf Tasten.
+---@field startIndex? number Eintrag, auf dem die Auswahl startet.
+---@field defaultSelected? number Gleichbedeutend mit startIndex.
+---@field onSelect? MSKMenuCallback Alternative zum cb-Parameter von Register.
+---@field onSelected? fun(selected: number, item: MSKMenuItem, args: any) Auswahl wurde verschoben.
+---@field onSideScroll? fun(selected: number, scrollIndex: number, args: any)
 ---@field onCheck? fun(selected: number, checked: boolean, args: any)
+---@field onClose? fun(key: string) key ist 'cancel', 'select', 'replace', 'forced' oder ein eigener Schlüssel aus Hide.
+
+--------------------------------------------------------------------------------
+-- Input
+--------------------------------------------------------------------------------
+
+---Feldtyp einer Dialogzeile und was er zurückgibt.
+---@alias MSKInputFieldType string
+---| "input" # string
+---| "textarea" # string
+---| "number" # number
+---| "slider" # number, Standard min 0 und max 100
+---| "checkbox" # boolean
+---| "select" # Wert der gewählten Option
+---| "multi-select" # Liste der Optionswerte
+---| "color" # '#rrggbb' oder '#rrggbbaa'
+---| "date" # 'YYYY-MM-DD'
+---| "date-range" # { 'YYYY-MM-DD', 'YYYY-MM-DD' }
+---| "time" # 'HH:MM'
+
+---@class MSKInputOption
+---@field value any
+---@field label? string Standard tostring(value).
+
+---Eine Zeile in Input.Dialog.
+---@class MSKInputDialogRow
+---@field type? MSKInputFieldType Standard 'input'.
+---@field label? string
+---@field id? string Der Wert steht zusätzlich unter dieser ID im Ergebnis.
+---@field description? string
+---@field placeholder? string
+---@field icon? string
+---@field required? boolean Bei checkbox muss sie angehakt sein.
+---@field disabled? boolean Das Ergebnis ist immer default, egal was der Client meldet.
+---@field default? any
+---@field min? number|string Zahl bei number und slider, 'YYYY-MM-DD' bei date und date-range.
+---@field max? number|string
+---@field step? number
+---@field maxLength? number Nur input und textarea.
+---@field password? boolean Nur input.
+---@field options? (MSKInputOption|any)[] Pflicht bei select und multi-select. Ein einfacher Wert ist die Kurzform für { value = ... }.
+
+---@class MSKInputDialogOptions
+---@field allowCancel? boolean Standard true.
+---@field size? "sm"|"md"|"lg" Standard 'md'.
+---@field labels? { confirm?: string, cancel?: string }
+
+--------------------------------------------------------------------------------
+-- Numpad
+--------------------------------------------------------------------------------
+
+---Warum ein Numpad nicht erfolgreich war.
+---@alias MSKNumpadReason string
+---| "wrong"
+---| "maxAttempts" # Zu viele Fehlversuche.
+---| "cancelled"
+---| "busy" # Es war schon ein Numpad offen.
+---| "invalid" # Nur Server: ungültige Spieler-ID.
+---| "error"
+
+---@class MSKNumpadLabels
+---@field enter? string Standard 'Enter Code'.
+---@field wrong? string Standard 'Incorrect'.
+---@field attempts? string Standard 'Attempts left'.
+
+---@class MSKNumpadOptions
+---@field code string|number Nur Ziffern. Als String übergeben, damit führende Nullen erhalten bleiben.
+---@field masked? boolean Punkte statt Ziffern, Standard true.
+---@field maxAttempts? number Standard unbegrenzt.
+---@field title? string
+---@field labels? MSKNumpadLabels
+---@field cb? fun(ok: boolean, reason?: MSKNumpadReason) Nur Client, Alternative zum cb-Parameter.
+
+---@class MSKNumpadInputOptions
+---@field length? number Höchstzahl der Ziffern, Standard 4.
+---@field minLength? number Standard 1.
+---@field masked? boolean Standard false.
+---@field title? string
+---@field labels? MSKNumpadLabels
+---@field cb? fun(digits?: string, reason?: MSKNumpadReason) Nur Client, Alternative zum cb-Parameter.
+
+--------------------------------------------------------------------------------
+-- TextUI
+--------------------------------------------------------------------------------
+
+---@alias MSKTextUIPosition string
+---| "bottom-center"
+---| "top-center"
+---| "left-center"
+---| "right-center"
+
+---@class MSKTextUIData
+---@field key? string|false Angezeigte Taste, Standard 'E'. false blendet das Tastenfeld aus.
+---@field text? string Unterstützt GTA-Farbcodes wie ~g~.
+---@field color? string Farbe des Tastenfelds, sonst Config.TextUIColor.
+---@field icon? string FontAwesome-Icon.
+---@field iconColor? string
+---@field iconAnimation? MSKIconAnimation
+---@field position? MSKTextUIPosition Standard 'bottom-center'.
+
+--------------------------------------------------------------------------------
+-- Request
+--------------------------------------------------------------------------------
+
+---@alias MSKRaycastFlag string
+---| "none"
+---| "all"
+---| "world"
+---| "vehicle"
+---| "ped"
+---| "object"
+---| "water"
+---| "glass"
+---| "river"
+---| "foliage"
+
+--------------------------------------------------------------------------------
+-- Scaleform
+--------------------------------------------------------------------------------
+
+---@class MSKScaleformRenderTarget
+---@field name string Name des Render Targets, etwa 'tvscreen'.
+---@field model? string|number Modell, das das Render Target trägt, etwa 'prop_tv_flat_01'.
+
+---@class MSKScaleformOptions
+---@field timeout? number Lade-Timeout in ms, Standard 30000.
+---@field renderTarget? MSKScaleformRenderTarget Zeichnet auf einen Bildschirm in der Welt statt auf den eigenen.
+
+---Argument für Movie:Call. Ohne Hülle entscheidet der Lua-Typ: Ganzzahl wird
+---int, Kommazahl float, boolean bool, string Text. Mit Hülle lässt sich der
+---Typ erzwingen.
+---@alias MSKScaleformArg integer|number|boolean|string|{ int: number }|{ float: number }|{ texture: string }
+
+---@class MSKScaleformArea
+---@field x number Mittelpunkt, 0 bis 1.
+---@field y number
+---@field width number
+---@field height number
+
+---Objekt aus Scaleform.New. Nach Dispose ist es nicht mehr nutzbar, jeder
+---Aufruf wirft dann einen Fehler.
+---@class MSKScaleformMovie
+---@field name string
+---@field handle number|nil Nach Dispose nil.
+---@field rendering boolean
+local MSKScaleformMovie = {}
+
+---Ruft eine Methode des Movies auf.
+---@param method string
+---@param ... MSKScaleformArg
+function MSKScaleformMovie:Call(method, ...) end
+
+---Ruft eine Methode auf und wartet höchstens eine Sekunde auf ihren Rückgabewert.
+---@param method string
+---@param returnType "int"|"bool"|"string"
+---@param ... MSKScaleformArg
+---@return integer|boolean|string|nil
+function MSKScaleformMovie:CallWithReturn(method, returnType, ...) end
+
+---Zeichnet einen Frame. Ohne Argumente bildschirmfüllend, sonst an x/y mit
+---width/height (alles 0 bis 1).
+---@param x? number
+---@param y? number
+---@param width? number
+---@param height? number
+function MSKScaleformMovie:Draw(x, y, width, height) end
+
+---Zeichnet das Movie in einem eigenen Thread in jedem Frame. Mit duration
+---stoppt es danach und gibt sich selbst frei, ohne läuft es bis Stop oder Dispose.
+---@param duration? number
+---@param area? MSKScaleformArea Ohne Angabe bildschirmfüllend.
+function MSKScaleformMovie:Render(duration, area) end
+
+---Beendet Render. Das Movie bleibt geladen und kann wieder gerendert werden.
+function MSKScaleformMovie:Stop() end
+
+---Beendet Render und gibt das Movie frei.
+function MSKScaleformMovie:Dispose() end
+
+---Zeichnet auf ein benanntes Render Target eines Modells in der Welt.
+---Nur ein hier registriertes Render Target wird hier auch wieder freigegeben.
+---@param name string
+---@param model? string|number
+function MSKScaleformMovie:SetRenderTarget(name, model) end
+
+---Löst das Render Target, das Movie zeichnet wieder auf den Bildschirm.
+function MSKScaleformMovie:ReleaseRenderTarget() end
+
+---Ob Render gerade zeichnet.
+---@return boolean
+function MSKScaleformMovie:IsRendering() end
 
 --------------------------------------------------------------------------------
 -- Command
@@ -171,15 +436,24 @@ function MSKPlayer.Get(playerId, key) end
 
 ---@alias MSKCommandParamType string
 ---| "number"
----| "string"
----| "playerId"
----| "player"
+---| "string" # Ein Wort, das keine Zahl ist.
+---| "longString" # Der Rest der Zeile, muss der letzte Parameter sein.
+---| "playerId" # Server-ID oder 'me'.
+---| "player" # Wie playerId, liefert aber die Spielerdaten.
 ---| "any"
 
 ---@class MSKCommandParam
----@field name string
+---@field name string Schlüssel, unter dem der Wert in args landet.
 ---@field type? MSKCommandParamType Bestimmt, wie das Argument geparst wird.
 ---@field help? string
+---@field optional? boolean Fehlt das Argument, gibt es keinen Fehler.
+---@field action? MSKCommandParamType Veraltet, stattdessen type.
+---@field val? boolean Veraltet, stattdessen optional (val = false heißt optional).
+
+---@class MSKCommandHotkey
+---@field key string Standardtaste, etwa 'F5'.
+---@field text string Beschreibung in den FiveM-Tastenbelegungen.
+---@field type? string Eingabegerät, Standard 'keyboard'.
 
 ---@class MSKCommandProperties
 ---@field help? string Beschreibung im Chat-Vorschlag.
@@ -188,34 +462,53 @@ function MSKPlayer.Get(playerId, key) end
 ---@field showSuggestion? boolean Standard true.
 ---@field allowConsole? boolean Nur Server, Standard true.
 ---@field returnPlayer? boolean Nur Server: übergibt das Spielerobjekt statt der ID.
----@field hotkey? string Nur Client: Taste, auf die der Befehl gelegt wird.
+---@field hotkey? MSKCommandHotkey Nur Client, nicht zusammen mit params.
 
 --------------------------------------------------------------------------------
 -- Cron
 --------------------------------------------------------------------------------
 
+---Zeitangabe für Cron.Create. Entweder ein Intervall (m, h, d, w, lassen sich
+---kombinieren) oder eine Uhrzeit (atH, optional atM und atD).
 ---@class MSKCronDate
----@field min? number Minute, 0 bis 59.
----@field hour? number Stunde, 0 bis 23.
----@field day? number Tag des Monats.
----@field month? number
----@field year? number
+---@field m? number Intervall in Minuten.
+---@field h? number Intervall in Stunden.
+---@field d? number Intervall in Tagen.
+---@field w? number Intervall in Wochen.
+---@field atH? number Stunde der Uhrzeit, 0 bis 23.
+---@field atM? number Minute der Uhrzeit, 0 bis 59. Ohne Angabe zur vollen Stunde.
+---@field atD? number Wochentag, 1 = Sonntag bis 7 = Samstag. Ohne Angabe täglich.
+
+---Zweites Argument an den Callback von Cron.Create.
+---@class MSKCronInfo
+---@field timestamp number
+---@field d number Tag im Monat, bei Uhrzeit-Jobs der Wochentag (1 = Sonntag).
+---@field h number
+---@field m number
+
+---Zweites Argument an den Callback von Cron.Schedule.
+---@class MSKCronTaskInfo
+---@field timestamp number
+---@field runs number Wie oft der Task schon gelaufen ist, dieser Lauf eingeschlossen.
 
 ---@class MSKCronJob
----@field uniqueId string
+---@field uniqueId number
 ---@field timestamp? number
----@field date MSKCronDate
+---@field date MSKCronDate|number
 ---@field data any
----@field cb fun(data: any)
+---@field cb fun(uniqueId: number, data: any, info: MSKCronInfo)
+---@field owner? string
 
 --------------------------------------------------------------------------------
 -- Check
 --------------------------------------------------------------------------------
 
 ---@class MSKCheckRepo
----@field resource? string Name der Resource, sonst die aufrufende.
----@field repository? string GitHub-Repository im Format user/repo.
----@field checkName? table
+---@field author string GitHub-Benutzer oder Organisation.
+---@field name string Name des Repositorys, zugleich der erwartete Resource-Name.
+---@field checkName? boolean|{ notify?: boolean } Warnt, wenn die Resource umbenannt wurde. notify wiederholt die Warnung alle 5 Sekunden.
+---@field print? boolean Meldet auch, wenn die Resource aktuell ist.
+---@field download? string Link statt der Release-Seite.
 
 --------------------------------------------------------------------------------
 -- Bridge
@@ -369,7 +662,7 @@ function MSKPlayer.Get(playerId, key) end
 ---@class MSKVehicleInsert
 ---@field owner string Pflicht.
 ---@field plate string Pflicht.
----@field model? string|number
+---@field model? string|number Auf QBCore und Qbox Pflicht (Spawnname oder Hash).
 ---@field props? table
 ---@field stored? boolean Standard true.
 ---@field garage? string
