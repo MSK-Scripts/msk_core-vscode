@@ -1,63 +1,70 @@
 # MSK Core (FiveM) IntelliSense
 
-Autocompletion, Signaturen und Typprüfung für die `MSK.*` API der
-[msk_core](https://github.com/MSK-Scripts/msk_core) Library.
+Autocompletion, signatures and type checking for the `MSK.*` API of the
+[msk_core](https://github.com/MSK-Scripts/msk_core) library for FiveM.
+Documentation of the library itself: [docu.msk-scripts.de](https://docu.msk-scripts.de).
 
-Die Extension trägt ihre Definitionen global in `Lua.workspace.library` ein.
-Sie wirken damit in jedem Projekt, ohne dass pro Resource etwas konfiguriert
-werden muss.
+The extension adds its definitions globally to `Lua.workspace.library`, so
+they work in every project without configuring anything per resource.
 
-## Voraussetzungen
+## Installation
 
-`sumneko.lua` (Lua Language Server). Wird als Abhängigkeit automatisch
-mitinstalliert.
+Search for **MSK Core** in the Extensions view, or run:
 
-Für die FiveM Natives zusätzlich `communityox.cfxlua-vscode-cox` oder das
-Addon [fivem-lls-addon](https://github.com/overextended/fivem-lls-addon).
-Beides ist unabhängig von dieser Extension, sie ergänzen sich.
-
-## Was abgedeckt ist
-
-Stand msk_core **4.1.0**.
-
-- Das globale `MSK` Handle mit allen Modul-Namespaces
-- `MSK.Player` inklusive der Laufzeitfelder, die der 100ms-Thread pflegt
-- Alle Module: Math, String, Table, Vector, Timeout, Callback, Context, Menu,
-  Input, Numpad, Progress, TextUI, Coords, Points, Request, Scaleform, Cron,
-  Check, Society, Offline, VehicleStore
-- Die Module aus 4.1.0: Alert, Anim, Array, Cache, Class, Clipboard, Controls,
-  Dui, Events, Files, Grid, Hook, Keybind, Locale, Logger, Marker, Print,
-  Radial, Require, Selector, Settings, Skillcheck, Timer, TxAdmin,
-  VehicleProperties und Zones
-- Die flachen Funktionen aus Ace, Ban, Command, Entities, Notify, Vehicle
-  und World
-- Die Backwards-Compat-Aliase aus `aliases.lua` inklusive der abweichenden
-  Bool-Semantik von `MSK.Trim`
-- Die gebräuchlichen Export-Proxies wie `MSK.Round` oder `MSK.Progressbar`
-- Optionstabellen als eigene Typen: `MSKProgressData`, `MSKContextOption`,
-  `MSKMenuItem`, `MSKCommandProperties`, `MSKPointProperties` und weitere
-
-### Client und Server
-
-Wo sich die Signaturen unterscheiden, ist die Client-Variante die
-Hauptsignatur und die Server-Variante eine Überladung. Auf dem Server nimmt
-fast jede UI-Funktion die Ziel-Spieler-ID als erstes Argument:
-
-```lua
-MSK.Notification({ title = 'Titel', message = 'Text', type = 'success' })         -- Client
-MSK.Notification(source, { title = 'Titel', message = 'Text', type = 'success' }) -- Server
+```
+ext install musiker15.msk-core-lua
 ```
 
-Seit msk_core 4.1.0 nehmen die UI-Funktionen eine Tabelle. Die alten
-Parameter-Formen funktionieren weiter und sind als veraltet markiert, der
-Language Server streicht sie in der Vorschlagsliste durch.
+## Requirements
 
-Der Language Server akzeptiert beide Formen. Eine Trennung nach Seite ist
-nicht möglich, solange Client- und Server-Dateien im selben Workspace liegen.
+`sumneko.lua` (Lua Language Server). It is installed automatically as a
+dependency.
 
-## Einrichtung im Projekt
+For the FiveM natives, additionally use `communityox.cfxlua-vscode-cox` or the
+[fivem-lls-addon](https://github.com/overextended/fivem-lls-addon). Both are
+independent of this extension and complement it.
 
-In der `fxmanifest.lua` der eigenen Resource:
+## What is covered
+
+Based on msk_core **4.1.0**.
+
+- The global `MSK` handle with all module namespaces
+- `MSK.Player` including the runtime fields maintained by the 100 ms thread
+- All modules: Alert, Anim, Array, Cache, Callback, Check, Class, Clipboard,
+  Context, Controls, Coords, Cron, Dui, Events, Files, Grid, Hook, Input,
+  Keybind, Locale, Logger, Marker, Math, Menu, Numpad, Offline, Points, Print,
+  Progress, Radial, Request, Require, Scaleform, Selector, Settings,
+  Skillcheck, Society, String, Table, TextUI, Timeout, Timer, Vector,
+  VehicleProperties, VehicleStore and Zones
+- The flat functions from Ace, Ban, Command, Entities, Notify, Vehicle and
+  World
+- The backwards compatibility aliases from `aliases.lua`, including the
+  different boolean semantics of `MSK.Trim`
+- Common export proxies such as `MSK.Round` or `MSK.Progressbar`
+- Option tables as their own types: `MSKProgressData`, `MSKContextOption`,
+  `MSKMenuItem`, `MSKCommandProperties`, `MSKPointProperties` and more
+
+### Client and server
+
+Where signatures differ, the client variant is the main signature and the
+server variant is an overload. On the server, almost every UI function takes
+the target player ID as its first argument:
+
+```lua
+MSK.Notification({ title = 'Title', message = 'Text', type = 'success' })         -- Client
+MSK.Notification(source, { title = 'Title', message = 'Text', type = 'success' }) -- Server
+```
+
+Since msk_core 4.1.0 the UI functions take a table. The old parameter forms
+still work and are marked as deprecated, so the language server shows them
+struck through in the suggestion list.
+
+The language server accepts both forms. Separating them by side is not
+possible as long as client and server files live in the same workspace.
+
+## Project setup
+
+In the `fxmanifest.lua` of your resource:
 
 ```lua
 lua54 'yes'
@@ -65,83 +72,59 @@ lua54 'yes'
 shared_script '@msk_core/import.lua'
 ```
 
-Optional lassen sich Module vorziehen, statt sie lazy zu laden:
+Optionally, modules can be loaded eagerly instead of lazily:
 
 ```lua
 msk_core 'Callback'
 msk_core 'Player'
 ```
 
-## Einstellungen
+## Settings
 
-| Einstellung | Standard | Wirkung |
+| Setting | Default | Effect |
 |---|---|---|
-| `mskCore.enableLibrary` | `true` | Bindet die Definitionen in `Lua.workspace.library` ein. |
+| `mskCore.enableLibrary` | `true` | Adds the definitions to `Lua.workspace.library` (user settings). |
+| `mskCore.setRuntime` | `true` | Sets `Lua.runtime.version` to `Lua 5.4` for the workspace, but only if it contains a `fxmanifest.lua` and no runtime is set there yet. Other Lua projects are not touched. |
 
-Befehle in der Command Palette:
+Commands in the Command Palette:
 
-- `MSK Core: Definitionen neu einbinden`
-- `MSK Core: Pfad der Definitionen anzeigen`
+- `MSK Core: Reload definitions`
+- `MSK Core: Show definitions path`
 
-## Unbekannte Felder
+When the extension is uninstalled, it removes its own library entries from
+your settings again.
 
-`import.lua` leitet jeden Namen, der weder Modul noch Alias ist, automatisch
-an `exports.msk_core:<Name>` weiter. Die gebräuchlichen davon sind als Typ
-hinterlegt, aber nicht jeder denkbare.
+## Unknown fields
 
-Ein selten genutzter Export kann deshalb als `undefined-field` angemerkt
-werden, obwohl er zur Laufzeit funktioniert. Das ist ein bewusster
-Kompromiss, denn dieselbe Prüfung fängt Tippfehler ab. Wer sie nicht möchte,
-schaltet sie in den Settings ab:
+`import.lua` forwards every name that is neither a module nor an alias to
+`exports.msk_core:<Name>`. The common ones are typed, but not every possible
+one.
+
+A rarely used export can therefore be reported as `undefined-field` even
+though it works at runtime. This is a deliberate trade-off, because the same
+check catches typos. If you don't want it, disable it in your settings:
 
 ```json
 "Lua.diagnostics.disable": ["undefined-field"]
 ```
 
-Sinnvoller ist es allerdings, den fehlenden Export in `library/msk.lua`
-nachzutragen.
+A better option is to open an issue or a pull request so the export gets
+added to `library/msk.lua`.
 
-## Nutzung ohne die Extension
+## Using the definitions without the extension
 
-Der Ordner `library/` enthält eine `config.json` und funktioniert damit auch
-als eigenständiges LuaLS-Addon. Dazu das Repo in ein Addon-Verzeichnis legen
-und in den Settings eintragen:
+The `library/` folder contains a `config.json` and therefore also works as a
+standalone LuaLS addon. Put the repository into an addon directory and add it
+to your settings:
 
 ```json
 "Lua.workspace.userThirdParty": ["~\\lua-addons"]
 ```
 
-## Aufbau
+## Contributing
 
-```
-msk_core-vscode/
-├── extension.js       Trägt library/ in Lua.workspace.library ein
-├── package.json
-├── logo.png
-└── library/
-    ├── config.json    Macht den Ordner zusätzlich zum LuaLS-Addon
-    ├── types.lua        Datenstrukturen und Optionstabellen
-    ├── types_new.lua    Typen der Module aus 4.1.0
-    ├── modules.lua      Modul-Namespaces (MSK.Math, MSK.Context, ...)
-    ├── modules_new.lua  Module aus 4.1.0 (MSK.Alert, MSK.Zones, ...)
-    └── msk.lua          Das MSK Handle und die flachen Funktionen
-```
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Der Language Server liest den ganzen Ordner. Neue Dateien in `library/`
-werden ohne weitere Konfiguration eingebunden.
+## License
 
-Die Definitionen liegen bewusst direkt im Extension-Ordner und werden von dort
-referenziert. `cfxlua-vscode` verschiebt sie stattdessen beim ersten Start nach
-`globalStorage`, und genau daran geht es kaputt, sobald dieser Ordner geleert
-wird: die Quelle ist dann bereits verschoben, die Settings zeigen ins Leere und
-ein Neustart repariert nichts.
-
-## Pflege
-
-Ändert sich die API von msk_core, gehören die Änderungen in `library/`.
-Danach `vsce package` und die neue `.vsix` installieren. Die Extension räumt
-Einträge älterer Versionen aus den Settings selbst weg.
-
-## Lizenz
-
-MIT
+[MIT](LICENSE)

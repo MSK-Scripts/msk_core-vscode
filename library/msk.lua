@@ -1,107 +1,132 @@
 ---@meta
---- Globales MSK-Handle der msk_core Library (FiveM).
+--- Global MSK handle of the msk_core library (FiveM).
 ---
---- Entsteht in der Consumer-Resource durch
+--- Created in the consumer resource by
 ---     shared_script '@msk_core/import.lua'
---- in der fxmanifest.lua. Module werden lazy nachgeladen, sobald sie das erste
---- Mal angefasst werden. Optional lässt sich das vorziehen:
+--- in fxmanifest.lua. Modules are lazy-loaded the first time they are
+--- accessed. Optionally you can load them up front:
 ---     msk_core 'Callback'
 ---     msk_core 'Player'
 ---
---- msk_core setzt Lua 5.4 voraus (lua54 'yes' in der fxmanifest.lua).
---- Stand: msk_core 4.1.0
+--- msk_core requires Lua 5.4 (lua54 'yes' in fxmanifest.lua).
+--- As of: msk_core 4.1.0
 
 ---@class MSK
----@field name string Name der Resource, die MSK importiert hat.
----@field context "client"|"server" Seite, auf der der Code läuft.
----@field Config table Inhalt der config.lua von msk_core.
----@field Bridge MSKBridge Erkanntes Framework und Inventory.
----@field LoadedPlayers table<number, MSKPlayerData> Nur Server: geladene Spieler, nur innerhalb von msk_core.
----@field Player MSKPlayer Lokaler Spieler. Auf dem Server die gespiegelte Tabelle, indiziert per Server-ID.
+---@field name string Name of the resource that imported MSK.
+---@field context "client"|"server" Side the code runs on.
+---@field Config table Contents of msk_core's config.lua.
+---@field Bridge MSKBridge Detected framework and inventory.
+---@field LoadedPlayers table<number, MSKPlayerData> Server only: loaded players, only inside msk_core.
+---@field Player MSKPlayer Local player. On the server the mirrored table, indexed by server ID.
 ---@field Math MSKMath
 ---@field String MSKString
 ---@field Table MSKTable
+---@field Array MSKArray
 ---@field Vector MSKVector
 ---@field Timeout MSKTimeout
+---@field Timer MSKTimer
+---@field Cache MSKCache
+---@field Class MSKClass
+---@field Hook MSKHook
+---@field Require MSKRequire
+---@field Locale MSKLocale
+---@field Print MSKPrint
 ---@field Callback MSKCallback
+---@field Events MSKEvents Server only.
+---@field Alert MSKAlert
 ---@field Context MSKContext
 ---@field Menu MSKMenu
+---@field Radial MSKRadial Client only.
 ---@field Input MSKInput
 ---@field Numpad MSKNumpad
 ---@field Progress MSKProgress
+---@field Skillcheck MSKSkillcheck
 ---@field TextUI MSKTextUI
+---@field Clipboard MSKClipboard Client only.
+---@field Controls MSKControls Client only.
+---@field Keybind MSKKeybindModule Client only.
+---@field Settings MSKSettings Client only.
 ---@field Coords MSKCoords
----@field Points MSKPoints Nur Client.
----@field Request MSKRequest Nur Client.
+---@field Points MSKPoints Client only.
+---@field Zones MSKZones Client only.
+---@field Grid MSKGrid
+---@field Marker MSKMarker Client only.
+---@field Selector MSKSelector
+---@field Request MSKRequest Client only.
+---@field Anim MSKAnim Client only.
+---@field Dui MSKDui Client only.
 ---@field Scaleform MSKScaleform
----@field Cron MSKCron Nur Server.
----@field Check MSKCheck Nur Server.
----@field Society MSKSociety Nur Server.
----@field Offline MSKOffline Nur Server.
----@field VehicleStore MSKVehicleStore Nur Server.
----@overload fun(name: string): any Lädt ein Modul per Name, gleichwertig zu MSK.<Name>.
+---@field VehicleProperties MSKVehiclePropertiesModule Get is client only, Set works on both sides.
+---@field Cron MSKCron Server only.
+---@field Check MSKCheck Server only.
+---@field Files MSKFiles Server only.
+---@field Logger MSKLogger Server only.
+---@field Society MSKSociety Server only.
+---@field Offline MSKOffline Server only.
+---@field VehicleStore MSKVehicleStore Server only.
+---@overload fun(name: string): any Loads a module by name, equivalent to MSK.<Name>.
 MSK = {}
 
 --------------------------------------------------------------------------------
--- Basis
+-- Base
 --------------------------------------------------------------------------------
 
----Gibt eine Meldung mit dem Präfix der aufrufenden Resource aus.
----@param code string Typ aus Config.LoggingTypes, etwa "info", "error", "warn", "debug".
+---Prints a message with the prefix of the calling resource.
+---@param code string Type from Config.LoggingTypes, e.g. "info", "error", "warn", "debug".
 ---@param ... any
 function MSK.Logging(code, ...) end
 
----Kleingeschriebener Alias von MSK.Logging.
+---Lowercase alias of MSK.Logging.
 ---@param code string
 ---@param ... any
 function MSK.logging(code, ...) end
 
----Führt fn in einem pcall aus und wartet höchstens timeout ms auf ein Ergebnis.
----Gedacht für Exports fremder Resources, die beim Start noch nicht bereit sind.
----Liefert nil, wenn in der Zeit nichts kommt, und wirft keinen Fehler.
+---Runs fn in a pcall and waits at most timeout ms for a result.
+---Meant for exports of other resources that are not ready yet at startup.
+---Returns nil if nothing arrives in time, and does not throw an error.
 ---@param fn fun(): any
----@param timeout? number Standard 1000 ms.
+---@param timeout? number Default 1000 ms.
 ---@return any
 function MSK.Call(fn, timeout) end
 
----Liefert die Config-Tabelle von msk_core.
+---Returns the config table of msk_core.
 ---@return table
 function MSK.GetConfig() end
 
 --------------------------------------------------------------------------------
--- Callback (flach, aus dem Callback-Modul)
+-- Callback (flat, from the Callback module)
 --------------------------------------------------------------------------------
 
----Registriert einen Callback. Gleichwertig zu MSK.Callback.Register.
----Der Callback gehört der aufrufenden Resource: eine andere Resource kann ihn
----nicht überschreiben, und er verschwindet, sobald die Resource stoppt.
----Auf dem Server bekommt cb als ersten Parameter die Server-ID des Aufrufers.
+---Registers a callback. Equivalent to MSK.Callback.Register.
+---The callback belongs to the calling resource: another resource cannot
+---overwrite it, and it is removed as soon as the resource stops.
+---On the server, cb receives the caller's server ID as its first parameter.
 ---@param eventName string
 ---@param cb fun(playerId: number, ...: any): ...
----@return boolean registered false, wenn der Name schon einer anderen Resource gehört.
+---@return boolean registered false if the name already belongs to another resource.
 function MSK.Register(eventName, cb) end
 
----Ruft einen Callback der Gegenseite auf und wartet auf das Ergebnis.
----Läuft nach msk:callbackTimeout (Standard 5000 ms) ab und liefert dann nil.
+---Calls a callback on the other side and waits for the result.
+---Times out after msk:callbackTimeout (default 5000 ms) and then returns nil.
 ---Client: Trigger(eventName, ...). Server: Trigger(eventName, playerId, ...).
----Muss aus einem Thread heraus aufgerufen werden.
+---Must be called from within a thread.
 ---@param eventName string
 ---@param ... any
 ---@return any ...
 ---@overload fun(eventName: string, playerId: number, ...: any): ...
 function MSK.Trigger(eventName, ...) end
 
----Wie Trigger, aber der Server-Callback bekommt statt eines Rückgabewerts eine
----cb-Funktion, die er aufruft. Blockiert trotzdem bis zur Antwort. Nur Client.
+---Like Trigger, but instead of returning a value the server callback receives a
+---cb function that it calls. Still blocks until the response. Client only.
 ---@param eventName string
 ---@param ... any
 ---@return any ...
 function MSK.TriggerCallback(eventName, ...) end
 
----Wie Trigger, mit eigenem Zeitlimit in ms. nil oder false wartet ohne Limit.
----Gedacht für Callbacks, die auf den Spieler warten (Dialoge, Skillchecks) oder
----länger als msk:callbackTimeout brauchen. Auf dem Server endet das Warten
----auch, sobald der Spieler den Server verlässt.
+---Like Trigger, with a custom time limit in ms. nil or false waits without a limit.
+---Meant for callbacks that wait for the player (dialogs, skill checks) or
+---take longer than msk:callbackTimeout. On the server, waiting also ends
+---as soon as the player leaves the server.
 ---Client: TriggerAwait(eventName, timeout, ...).
 ---Server: TriggerAwait(eventName, playerId, timeout, ...).
 ---@param eventName string
@@ -111,24 +136,24 @@ function MSK.TriggerCallback(eventName, ...) end
 ---@overload fun(eventName: string, playerId: number, timeout?: number|false, ...: any): ...
 function MSK.TriggerAwait(eventName, timeout, ...) end
 
----Backwards-Compat-Alias von MSK.Register. Nur Server.
+---Backwards-compat alias of MSK.Register. Server only.
 ---@param eventName string
 ---@param cb fun(playerId: number, ...: any): ...
 ---@return boolean registered
 function MSK.RegisterCallback(eventName, cb) end
 
----Backwards-Compat-Alias von MSK.Register. Nur Server.
+---Backwards-compat alias of MSK.Register. Server only.
 ---@param eventName string
 ---@param cb fun(playerId: number, ...: any): ...
 ---@return boolean registered
 function MSK.RegisterServerCallback(eventName, cb) end
 
 --------------------------------------------------------------------------------
--- Spieler und Framework (Bridge)
+-- Player and framework (Bridge)
 --------------------------------------------------------------------------------
 
----Liefert das Spielerobjekt: vereinheitlichte Daten plus Methoden. Nur Server.
----Nimmt eine Server-ID, einen Identifier oder eine Query-Tabelle.
+---Returns the player object: unified data plus methods. Server only.
+---Accepts a server ID, an identifier or a query table.
 ---@param data MSKPlayerQuery|number|string
 ---@return MSKPlayerObject|nil
 function MSK.GetPlayer(data) end
@@ -141,43 +166,43 @@ function MSK.GetPlayerFromId(playerId) end
 ---@return MSKPlayerObject|nil
 function MSK.GetPlayerFromIdentifier(identifier) end
 
----Auf QBCore und Qbox ist die citizenid der Identifier.
+---On QBCore and Qbox the citizenid is the identifier.
 ---@param citizenid string
 ---@return MSKPlayerObject|nil
 function MSK.GetPlayerByCitizenId(citizenid) end
 
----Auf ESX immer nil, dort hängt keine Telefonnummer am Spieler.
+---Always nil on ESX, no phone number is attached to the player there.
 ---@param phone string
 ---@return MSKPlayerObject|nil
 function MSK.GetPlayerByPhone(phone) end
 
----Nur Qbox, auf jedem anderen Framework nil.
+---Qbox only, nil on every other framework.
 ---@param userId number
 ---@return MSKPlayerObject|nil
 function MSK.GetPlayerByUserId(userId) end
 
----Ruft cb auf, sobald sich ein Feld des Spielers ändert, etwa ped, vehicle,
----seat, weapon, isDead oder ein eigenes Feld. Alias von MSK.Player.OnChange.
----Client: cb(value, oldValue) für den lokalen Spieler.
----Server: cb(playerId, value, oldValue) für jeden gespiegelten Spieler.
----Liefert den Event-Handler, mit RemoveEventHandler lässt er sich wieder lösen.
+---Calls cb whenever a field of the player changes, e.g. ped, vehicle,
+---seat, weapon, isDead or a custom field. Alias of MSK.Player.OnChange.
+---Client: cb(value, oldValue) for the local player.
+---Server: cb(playerId, value, oldValue) for every mirrored player.
+---Returns the event handler, which can be removed again with RemoveEventHandler.
 ---@param key string
 ---@param cb fun(value: any, oldValue: any)
 ---@return table eventData
 ---@overload fun(key: string, cb: fun(playerId: number, value: any, oldValue: any)): table
 function MSK.OnPlayer(key, cb) end
 
----Auf dem Client ohne Parameter, dort der eigene Job.
+---On the client without parameters, returns your own job there.
 ---@param player? table|MSKPlayerQuery|number|string
 ---@return MSKPlayerJob|nil
 function MSK.GetPlayerJob(player) end
 
----Auf ESX immer nil, dort gibt es keine Gangs.
+---Always nil on ESX, there are no gangs there.
 ---@param player? table|MSKPlayerQuery|number|string
 ---@return MSKPlayerJob|nil
 function MSK.GetPlayerGang(player) end
 
----Alle Jobs des Spielers als name -> grade. Auf Qbox die echte Multijob-Map.
+---All jobs of the player as name -> grade. On Qbox the real multijob map.
 ---@param player? table|MSKPlayerQuery|number|string
 ---@return table<string, number>
 function MSK.GetPlayerJobs(player) end
@@ -194,36 +219,36 @@ function MSK.GetPlayerJobFromIdentifier(identifier) end
 ---@return MSKPlayerJob|nil
 function MSK.GetPlayerJobByCitizenId(citizenid) end
 
----Alle Job-Definitionen des Frameworks, keine Spieler. Client und Server.
----Auf dem Client ein Callback-Roundtrip, also nur aus einem Thread heraus.
+---All job definitions of the framework, not players. Client and server.
+---On the client this is a callback roundtrip, so only call it from a thread.
 ---@return table<string, MSKJobDefinition>
 function MSK.GetJobs() end
 
----Wie GetJobs, für Gangs. Auf ESX leer.
+---Like GetJobs, for gangs. Empty on ESX.
 ---@return table<string, MSKJobDefinition>
 function MSK.GetGangs() end
 
----Liefert alle geladenen Spieler als Daten ohne Methoden, optional gefiltert.
----Nur Server.
+---Returns all loaded players as data without methods, optionally filtered.
+---Server only.
 ---@param key? "job"|"gang"|"group"
----@param val? any Wert, auf den gefiltert wird.
+---@param val? any Value to filter by.
 ---@return MSKPlayerData[]
 function MSK.GetPlayers(key, val) end
 
----Vereinheitlichte Daten des lokalen Spielers, nil solange kein Charakter
----geladen ist. Nur Client.
+---Unified data of the local player, nil as long as no character
+---is loaded. Client only.
 ---@return MSKPlayerData|nil
 function MSK.GetPlayerData() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.IsPlayerLoaded() end
 
----Berücksichtigt visn_are und osp_ambulance, falls gestartet. Nur Client.
+---Takes visn_are and osp_ambulance into account if they are started. Client only.
 ---@return boolean
 function MSK.IsPlayerDead() end
 
----Liefert den gespiegelten Spielerdatensatz aus dem Core. Nur Server.
+---Returns the mirrored player record from the core. Server only.
 ---@param id number
 ---@return table|nil
 function MSK.GetMirroredPlayer(id) end
@@ -240,22 +265,22 @@ function MSK.GetPlayerServerId(id) end
 -- Inventory
 --------------------------------------------------------------------------------
 
----Prüft, ob der Spieler einen Gegenstand besitzt. Läuft über die
----konfigurierte Inventory-Bridge. Auf dem Server ist der erste Parameter die
----Server-ID. Steht an dritter Stelle eine Tabelle, wird sie als metadata
----gelesen und count übersprungen.
+---Checks whether the player owns an item. Goes through the
+---configured inventory bridge. On the server the first parameter is the
+---server ID. If the third argument is a table, it is read as metadata
+---and count is skipped.
 ---@param itemName string
----@param count? number Mindestmenge, Standard 1.
----@param metadata? table Nur bei Inventories mit Metadaten.
+---@param count? number Minimum amount, default 1.
+---@param metadata? table Only for inventories with metadata.
 ---@return table|false
 ---@overload fun(playerId: number, itemName: string|string[], count?: number, metadata?: table): table|false
 function MSK.HasItem(itemName, count, metadata) end
 
----Nimmt dieselben ID-Formen wie MSK.GetPlayer. Nur Server.
+---Accepts the same ID forms as MSK.GetPlayer. Server only.
 ---@param id number|string|MSKPlayerQuery
 ---@param itemName string|string[]
----@param count? number Mindestmenge, Standard 1.
----@param metadata? table Nur bei Inventories mit Metadaten.
+---@param count? number Minimum amount, default 1.
+---@param metadata? table Only for inventories with metadata.
 ---@return table|false
 function MSK.HasPlayerItem(id, itemName, count, metadata) end
 
@@ -263,13 +288,13 @@ function MSK.HasPlayerItem(id, itemName, count, metadata) end
 -- Commands
 --------------------------------------------------------------------------------
 
----Registriert einen Chat-Befehl inklusive Vorschlag und Rechteprüfung.
----commandName darf auch eine Liste von Namen sein, jeder bekommt eine eigene
----Kopie der properties.
+---Registers a chat command including suggestion and permission check.
+---commandName can also be a list of names, each one gets its own
+---copy of the properties.
 ---Client: RegisterCommand(name, cb, restricted, properties).
----Server: RegisterCommand(name, cb, properties), restricted steht dort in properties.
----Parameter vom Typ "longString" nehmen den Rest der Zeile auf und müssen
----deshalb der letzte Parameter sein.
+---Server: RegisterCommand(name, cb, properties), there restricted goes into properties.
+---Parameters of type "longString" take the rest of the line and must
+---therefore be the last parameter.
 ---@param commandName string|string[]
 ---@param callback fun(source: number, args: table, raw: string)
 ---@param restricted? string|string[]|false
@@ -282,129 +307,129 @@ function MSK.RegisterCommand(commandName, callback, restricted, properties) end
 -- ACE
 --------------------------------------------------------------------------------
 
----Prüft ein ACE-Recht, "command." wird bei Bedarf vorangestellt.
----Client ohne, Server mit Spieler-ID. Auf dem Client ein Callback-Roundtrip.
+---Checks an ACE permission, "command." is prepended if needed.
+---Client without, server with player ID. On the client a callback roundtrip.
 ---@param command string
 ---@return boolean
 ---@overload fun(playerId: number, command: string): boolean
 function MSK.IsAceAllowed(command) end
 
----Prüft, ob ein Principal ein ACE-Recht hat. Eine Zahl gilt als Server-ID,
----ein Text ohne Präfix als Gruppe oder, mit Doppelpunkt, als Identifier.
----Auf dem Client beantwortet der Server nur Gruppen und die eigenen Principals
----(eigene Server-ID, eigene Identifier). Für andere Spieler kommt immer false.
+---Checks whether a principal has an ACE permission. A number counts as a server ID,
+---text without a prefix as a group or, with a colon, as an identifier.
+---On the client the server only answers for groups and your own principals
+---(own server ID, own identifiers). For other players it always returns false.
 ---@param principal string|number
 ---@param ace string
 ---@return boolean
 function MSK.IsPrincipalAceAllowed(principal, ace) end
 
----Nur Server.
----@param principal string|number Gruppe, Identifier oder Server-ID.
+---Server only.
+---@param principal string|number Group, identifier or server ID.
 ---@param ace string
----@param allow? boolean Standard true.
+---@param allow? boolean Default true.
 function MSK.AddAce(principal, ace, allow) end
 
----Nur Server.
+---Server only.
 ---@param principal string|number
 ---@param ace string
 ---@param allow? boolean
 function MSK.RemoveAce(principal, ace, allow) end
 
----Ob msk_core ACEs setzen darf (add_ace resource.msk_core command.add_ace allow).
----Nur Server.
+---Whether msk_core is allowed to set ACEs (add_ace resource.msk_core command.add_ace allow).
+---Server only.
 ---@return boolean
 function MSK.CanAddAce() end
 
----Setzt ein ACE ohne Normalisierung des Principals und ohne "command."-Präfix.
----Läuft immer über msk_core. Nur Server.
+---Sets an ACE without normalizing the principal and without the "command." prefix.
+---Always goes through msk_core. Server only.
 ---@param principal string
 ---@param ace string
 ---@param allow? boolean
----@return boolean ok false, wenn msk_core keine ACEs setzen darf.
+---@return boolean ok false if msk_core is not allowed to set ACEs.
 function MSK.AddRawAce(principal, ace, allow) end
 
----Nur Server.
+---Server only.
 ---@param principal string
 ---@param ace string
 ---@param allow? boolean
 ---@return boolean ok
 function MSK.RemoveRawAce(principal, ace, allow) end
 
----Nur Server.
----@param child string|number Principal oder Server-ID.
+---Server only.
+---@param child string|number Principal or server ID.
 ---@param parent string
 function MSK.AddPrincipal(child, parent) end
 
----Nur Server.
+---Server only.
 ---@param child string|number
 ---@param parent string
 function MSK.RemovePrincipal(child, parent) end
 
 --------------------------------------------------------------------------------
--- Ban (nur Server)
+-- Ban (server only)
 --------------------------------------------------------------------------------
 
 ---@param playerId number
 ---@return table|false
 function MSK.IsPlayerBanned(playerId) end
 
----Sperrt einen Spieler. Die Zeitangabe kennt die Suffixe M, H, D und W,
----etwa "30M", "12H", "7D", "2W". Ohne Suffix gilt der Bann als permanent.
----@param playerId? number Ausführender Spieler. 0 steht für die Konsole, nil für das System.
----@param targetId number Zu sperrender Spieler.
+---Bans a player. The duration supports the suffixes M, H, D and W,
+---e.g. "30M", "12H", "7D", "2W". Without a suffix the ban is permanent.
+---@param playerId? number Executing player. 0 stands for the console, nil for the system.
+---@param targetId number Player to ban.
 ---@param time string|number
 ---@param reason? string
 function MSK.BanPlayer(playerId, targetId, time, reason) end
 
----@param playerId? number Ausführender Spieler. 0 steht für die Konsole, nil für das System.
----@param banId number ID des Bann-Eintrags.
+---@param playerId? number Executing player. 0 stands for the console, nil for the system.
+---@param banId number ID of the ban entry.
 function MSK.UnbanPlayer(playerId, banId) end
 
 --------------------------------------------------------------------------------
 -- Notifications
 --------------------------------------------------------------------------------
 
----Zeigt eine Benachrichtigung. Eine sichtbare Benachrichtigung mit derselben
----id wird aktualisiert statt gestapelt.
----Client: Notification(data). Server: Notification(playerId, data), -1 für alle.
----Die Form (title, message, type, duration) funktioniert noch, ist aber
----veraltet, stattdessen eine Tabelle übergeben.
+---Shows a notification. A visible notification with the same
+---id is updated instead of stacked.
+---Client: Notification(data). Server: Notification(playerId, data), -1 for everyone.
+---The form (title, message, type, duration) still works but is
+---deprecated, pass a table instead.
 ---@param data MSKNotifyData
 ---@overload fun(playerId: number, data: MSKNotifyData)
 ---@overload fun(title: string, message: string, typ?: MSKNotifyType, duration?: number)
 ---@overload fun(playerId: number, title: string, message: string, typ?: MSKNotifyType, duration?: number)
 function MSK.Notification(data) end
 
----Alias von MSK.Notification.
+---Alias of MSK.Notification.
 ---@param data MSKNotifyData
 ---@overload fun(playerId: number, data: MSKNotifyData)
 ---@overload fun(title: string, message: string, typ?: MSKNotifyType, duration?: number)
 ---@overload fun(playerId: number, title: string, message: string, typ?: MSKNotifyType, duration?: number)
 function MSK.Notify(data) end
 
----Zeigt einen Hinweistext. Je nach Config nativ oben links oder als TextUI.
+---Shows a help text. Depending on the config natively at the top left or as TextUI.
 ---@param text string
----@param key? string Taste in der TextUI, nur Client.
+---@param key? string Key shown in the TextUI, client only.
 ---@overload fun(playerId: number, text: string)
 function MSK.HelpNotification(text, key) end
 
----Alias von MSK.HelpNotification.
+---Alias of MSK.HelpNotification.
 ---@param text string
 ---@param key? string
 ---@overload fun(playerId: number, text: string)
 function MSK.HelpNotify(text, key) end
 
----Zeigt eine Benachrichtigung mit Bild im GTA-Stil.
+---Shows a GTA-style notification with a picture.
 ---@param text string
 ---@param title string
 ---@param subtitle string
----@param icon? string Standard "CHAR_HUMANDEFAULT".
----@param flash? boolean Standard true, false schaltet das Blinken ab.
----@param icontype? number Standard 1.
+---@param icon? string Default "CHAR_HUMANDEFAULT".
+---@param flash? boolean Default true, false disables flashing.
+---@param icontype? number Default 1.
 ---@overload fun(playerId: number, text: string, title: string, subtitle: string, icon?: string, flash?: boolean, icontype?: number)
 function MSK.AdvancedNotification(text, title, subtitle, icon, flash, icontype) end
 
----Alias von MSK.AdvancedNotification.
+---Alias of MSK.AdvancedNotification.
 ---@param text string
 ---@param title string
 ---@param subtitle string
@@ -414,20 +439,20 @@ function MSK.AdvancedNotification(text, title, subtitle, icon, flash, icontype) 
 ---@overload fun(playerId: number, text: string, title: string, subtitle: string, icon?: string, flash?: boolean, icontype?: number)
 function MSK.AdvancedNotify(text, title, subtitle, icon, flash, icontype) end
 
----Zeigt einen Untertitel am unteren Bildrand.
+---Shows a subtitle at the bottom of the screen.
 ---@param text string
----@param duration? number Standard 8000 ms.
+---@param duration? number Default 8000 ms.
 ---@overload fun(playerId: number, message: string, duration?: number)
 function MSK.Subtitle(text, duration) end
 
----Zeigt den Ladekreis unten rechts.
+---Shows the loading spinner at the bottom right.
 ---@param text string
----@param typ? number Standard 4 (orange), 5 ist weiß.
----@param duration? number Standard 5000 ms.
+---@param typ? number Default 4 (orange), 5 is white.
+---@param duration? number Default 5000 ms.
 ---@overload fun(playerId: number, text: string, typ?: number, duration?: number)
 function MSK.Spinner(text, typ, duration) end
 
----Zeichnet Text an Weltkoordinaten. Muss pro Frame laufen.
+---Draws text at world coordinates. Must run every frame.
 ---@param coords vector3|table
 ---@param text string
 ---@param size? number
@@ -435,7 +460,7 @@ function MSK.Spinner(text, typ, duration) end
 ---@overload fun(playerId: number, coords: vector3|table, text: string, size?: number, font?: number)
 function MSK.Draw3DText(coords, text, size, font) end
 
----Zeichnet Text auf dem Bildschirm. Muss pro Frame laufen.
+---Draws text on the screen. Must run every frame.
 ---@param text string
 ---@param outline? boolean
 ---@param font? number
@@ -446,23 +471,23 @@ function MSK.Draw3DText(coords, text, size, font) end
 function MSK.DrawGenericText(text, outline, font, size, color, position) end
 
 --------------------------------------------------------------------------------
--- Entities und Fahrzeuge
+-- Entities and vehicles
 --------------------------------------------------------------------------------
 
----Nächster Spieler oder nächstes Fahrzeug. Mit maxDistance zählen nur
----Entities in dieser Reichweite. Ohne Treffer kommt -1, -1.
+---Closest player or closest vehicle. With maxDistance only entities
+---within that range count. Without a match it returns -1, -1.
 ---Client: GetClosestEntity(isPlayerEntity, coords, maxDistance).
----Server: GetClosestEntity(isPlayerEntity, coords, entities, maxDistance). Dort
----ist isPlayerEntity false für Fahrzeuge oder die Server-ID, um die gesucht
----wird. Dieser Spieler dient ohne coords als Ursprung und wird nie selbst geliefert.
+---Server: GetClosestEntity(isPlayerEntity, coords, entities, maxDistance). There
+---isPlayerEntity is false for vehicles or the server ID to search
+---around. Without coords this player serves as the origin and is never returned itself.
 ---@param isPlayerEntity? boolean
----@param coords? vector3 Standard die eigene Position.
+---@param coords? vector3 Defaults to your own position.
 ---@param maxDistance? number
 ---@return number entity, number distance
 ---@overload fun(isPlayerEntity: number|false, coords?: vector3, entities?: table, maxDistance?: number): number, number
 function MSK.GetClosestEntity(isPlayerEntity, coords, maxDistance) end
 
----Alle Spieler oder Fahrzeuge in der Reichweite. Ohne distance zählt jede Entity.
+---All players or vehicles within range. Without distance every entity counts.
 ---@param isPlayerEntity? boolean
 ---@param coords? vector3
 ---@param distance? number
@@ -470,74 +495,74 @@ function MSK.GetClosestEntity(isPlayerEntity, coords, maxDistance) end
 ---@overload fun(isPlayerEntity: number|false, coords?: vector3, distance?: number, entities?: table): table
 function MSK.GetClosestEntities(isPlayerEntity, coords, distance) end
 
----Nächstes Fahrzeug, -1, -1 ohne Treffer.
+---Closest vehicle, -1, -1 without a match.
 ---Client: GetClosestVehicle(coords, maxDistance).
----Server: GetClosestVehicle(coords, vehicles, maxDistance), coords sind dort Pflicht.
----@param coords? vector3 Standard die eigene Position.
----@param maxDistance? number Nur Fahrzeuge in dieser Reichweite zählen.
+---Server: GetClosestVehicle(coords, vehicles, maxDistance), coords are required there.
+---@param coords? vector3 Defaults to your own position.
+---@param maxDistance? number Only vehicles within this range count.
 ---@return number vehicle, number distance
 ---@overload fun(coords: vector3, vehicles?: number[], maxDistance?: number): number, number
 function MSK.GetClosestVehicle(coords, maxDistance) end
 
 ---@param coords? vector3
----@param distance? number Ohne Angabe zählt jedes Fahrzeug.
+---@param distance? number If omitted, every vehicle counts.
 ---@return table
 ---@overload fun(coords: vector3, distance?: number, vehicles?: table): table
 function MSK.GetClosestVehicles(coords, distance) end
 
----Peds in der Reichweite, das nächste zuerst. Spieler-Peds nur mit
----includePlayers, der eigene Ped nie. Nur Client.
----@param coords? vector3 Standard die eigene Position.
----@param maxDistance? number Standard 2.0
+---Peds within range, closest first. Player peds only with
+---includePlayers, never your own ped. Client only.
+---@param coords? vector3 Defaults to your own position.
+---@param maxDistance? number Default 2.0
 ---@param includePlayers? boolean
 ---@return MSKNearbyEntity[]
 function MSK.GetNearbyPeds(coords, maxDistance, includePlayers) end
 
----Objekte in der Reichweite, das nächste zuerst. Nur Client.
+---Objects within range, closest first. Client only.
 ---@param coords? vector3
----@param maxDistance? number Standard 2.0
+---@param maxDistance? number Default 2.0
 ---@return MSKNearbyEntity[]
 function MSK.GetNearbyObjects(coords, maxDistance) end
 
----Fahrzeuge in der Reichweite, das nächste zuerst. Das eigene Fahrzeug nur mit
----includeOwn. Nur Client.
+---Vehicles within range, closest first. Your own vehicle only with
+---includeOwn. Client only.
 ---@param coords? vector3
----@param maxDistance? number Standard 2.0
+---@param maxDistance? number Default 2.0
 ---@param includeOwn? boolean
 ---@return MSKNearbyEntity[]
 function MSK.GetNearbyVehicles(coords, maxDistance, includeOwn) end
 
----Andere Spieler in der Reichweite, der nächste zuerst. Der eigene Spieler nur
----mit includeSelf. Nur Client.
+---Other players within range, closest first. Your own player only
+---with includeSelf. Client only.
 ---@param coords? vector3
----@param maxDistance? number Standard 2.0
+---@param maxDistance? number Default 2.0
 ---@param includeSelf? boolean
 ---@return MSKNearbyPlayer[]
 function MSK.GetNearbyPlayers(coords, maxDistance, includeSelf) end
 
----Nächster Ped in der Reichweite samt Position, nil ohne Treffer. Nur Client.
+---Closest ped within range including its position, nil without a match. Client only.
 ---@param coords? vector3
----@param maxDistance? number Standard 2.0
+---@param maxDistance? number Default 2.0
 ---@param includePlayers? boolean
 ---@return number|nil ped, vector3|nil coords
 function MSK.GetClosestPed(coords, maxDistance, includePlayers) end
 
----Nächstes Objekt in der Reichweite samt Position, nil ohne Treffer. Nur Client.
+---Closest object within range including its position, nil without a match. Client only.
 ---@param coords? vector3
----@param maxDistance? number Standard 2.0
+---@param maxDistance? number Default 2.0
 ---@return number|nil object, vector3|nil coords
 function MSK.GetClosestObject(coords, maxDistance) end
 
----Fahrzeug mit diesem Kennzeichen in der Nähe, false ohne Treffer. Nur Client.
----Groß- und Kleinschreibung und Leerzeichen am Rand spielen keine Rolle.
+---Vehicle with this plate nearby, false without a match. Client only.
+---Case and leading or trailing whitespace do not matter.
 ---@param plate string
 ---@param coords? vector3
 ---@param distance? number
 ---@return number|false
 function MSK.GetVehicleWithPlate(plate, coords, distance) end
 
----Fahrzeug mit diesem Kennzeichen in der Nähe von coords, false ohne Treffer.
----Ohne coords wird jedes Fahrzeug durchsucht. Nur Server.
+---Vehicle with this plate near coords, false without a match.
+---Without coords every vehicle is searched. Server only.
 ---@param plate string
 ---@param coords? vector3
 ---@param distance? number
@@ -545,94 +570,94 @@ function MSK.GetVehicleWithPlate(plate, coords, distance) end
 ---@return number|false
 function MSK.GetClosestVehicleWithPlate(plate, coords, distance, vehicles) end
 
----Sucht das Fahrzeug mit diesem Kennzeichen ohne Radius. Die Suche läuft immer
----auf dem Server, auf dem Client ist es ein Callback-Roundtrip (blockierend).
----Auf dem Client ist vehicle false, wenn das Fahrzeug existiert, aber hier
----nicht gestreamt ist. netId ist dann trotzdem gesetzt.
+---Finds the vehicle with this plate without a radius. The search always runs
+---on the server, on the client it is a callback roundtrip (blocking).
+---On the client vehicle is false if the vehicle exists but is not
+---streamed here. netId is still set in that case.
 ---@param plate string
 ---@return number|false vehicle, number|nil netId
 function MSK.GetVehicleFromPlate(plate) end
 
----Liest das Modell aus der Fahrzeugtabelle des Frameworks, funktioniert also
----auch für eingeparkte Fahrzeuge. Blockierend, auf dem Client ein Callback.
+---Reads the model from the framework's vehicle table, so it also works
+---for parked vehicles. Blocking, on the client a callback.
 ---@param plate string
----@return number|nil model Hash, nil ohne Treffer oder auf STANDALONE.
----@return string|nil name Spawnname, nur wenn das Framework ihn speichert.
+---@return number|nil model Hash, nil without a match or on STANDALONE.
+---@return string|nil name Spawn name, only if the framework stores it.
 function MSK.GetModelFromPlate(plate) end
 
----Fahrzeug vor dem Spieler. Nur Client.
----@param distance? number Standard 5.0
+---Vehicle in front of the player. Client only.
+---@param distance? number Default 5.0
 ---@return number|false vehicle, vector3|nil coords, string|nil distance
 function MSK.GetVehicleInDirection(distance) end
 
----Alias von MSK.GetVehicleInDirection. Nur Client.
+---Alias of MSK.GetVehicleInDirection. Client only.
 ---@param distance? number
 ---@return number|false vehicle, vector3|nil coords, string|nil distance
 function MSK.GetVehicleInFront(distance) end
 
----Sitzindex des Peds im Fahrzeug (-1 ist der Fahrer), false wenn er nicht
----darin sitzt. Auf dem Server seit 4.1.0 ebenfalls false statt -1.
----Client: ohne Parameter der eigene Ped und das eigene Fahrzeug.
----Server: ped ist Pflicht, ohne vehicle das Fahrzeug, in dem er sitzt.
+---Seat index of the ped in the vehicle (-1 is the driver), false if it is not
+---sitting in it. Since 4.1.0 also false instead of -1 on the server.
+---Client: without parameters your own ped and your own vehicle.
+---Server: ped is required, without vehicle the vehicle it is sitting in.
 ---@param ped? number
 ---@param vehicle? number
 ---@return number|false seat
 function MSK.GetPedVehicleSeat(ped, vehicle) end
 
----Nur Client.
+---Client only.
 ---@param vehicle number
 ---@return boolean
 function MSK.IsVehicleEmpty(vehicle) end
 
----Anzeigename des Fahrzeugs. Nur Client.
+---Display name of the vehicle. Client only.
 ---@param vehicle? number
 ---@param model? string|number
 ---@return string
 function MSK.GetVehicleLabel(vehicle, model) end
 
----Nur Client.
+---Client only.
 ---@param model string|number
 ---@return string
 function MSK.GetVehicleLabelFromModel(model) end
 
----Schließt alle Türen. Nur Client.
+---Closes all doors. Client only.
 ---@param vehicle number
 function MSK.CloseVehicleDoors(vehicle) end
 
----Erzeugt ein vernetztes Fahrzeug auf dem Server und wartet, bis es existiert.
----Ohne options.type fragt msk_core einmal pro Modell einen Client nach dem
----Fahrzeugtyp. Anhänger lassen sich so nicht erkennen, dafür type = "trailer"
----setzen. Blockierend. Nur Server.
+---Creates a networked vehicle on the server and waits until it exists.
+---Without options.type msk_core asks a client for the vehicle type once per
+---model. Trailers cannot be detected that way, set type = "trailer"
+---for them. Blocking. Server only.
 ---@param model string|number
 ---@param coords vector3|vector4|table
 ---@param options? MSKSpawnVehicleOptions
----@return number|nil vehicle, number|nil netId nil, wenn das Fahrzeug nicht erstellt werden konnte.
+---@return number|nil vehicle, number|nil netId nil if the vehicle could not be created.
 function MSK.SpawnVehicle(model, coords, options) end
 
 --------------------------------------------------------------------------------
 -- World
 --------------------------------------------------------------------------------
 
----Prüft, ob in der Reichweite kein Fahrzeug steht.
----@param coords? vector3 Auf dem Client Standard die eigene Position, auf dem Server Pflicht.
----@param maxDistance? number Standard 5.0
+---Checks whether no vehicle is within range.
+---@param coords? vector3 On the client defaults to your own position, required on the server.
+---@param maxDistance? number Default 5.0
 ---@return boolean
 function MSK.IsSpawnPointClear(coords, maxDistance) end
 
----Erzeugt ein Mugshot-Bild des Peds. Wird es nicht rechtzeitig fertig, kommt
----nil. Nur Client.
+---Creates a mugshot image of the ped. If it is not ready in time,
+---nil is returned. Client only.
 ---@param ped number
 ---@param transparent? boolean
----@param timeout? number Standard 5000 ms.
+---@param timeout? number Default 5000 ms.
 ---@return number|nil handle, string|nil textureDict
 function MSK.GetPedMugshot(ped, transparent, timeout) end
 
----Nächster Spieler, -1, -1 ohne Treffer.
----Client: GetClosestPlayer(coords, maxDistance), liefert den Player-Index.
----Server: GetClosestPlayer(playerId, coords, maxDistance). Um playerId wird
----gesucht, er selbst wird nie geliefert. Ohne playerId sind coords Pflicht.
----@param coords? vector3 Standard die eigene Position.
----@param maxDistance? number Nur Spieler in dieser Reichweite zählen.
+---Closest player, -1, -1 without a match.
+---Client: GetClosestPlayer(coords, maxDistance), returns the player index.
+---Server: GetClosestPlayer(playerId, coords, maxDistance). The search is around
+---playerId, who is never returned. Without playerId coords are required.
+---@param coords? vector3 Defaults to your own position.
+---@param maxDistance? number Only players within this range count.
 ---@return number player, number distance
 ---@overload fun(playerId?: number, coords?: vector3, maxDistance?: number): string|number, number
 function MSK.GetClosestPlayer(coords, maxDistance) end
@@ -643,8 +668,8 @@ function MSK.GetClosestPlayer(coords, maxDistance) end
 ---@overload fun(playerId?: number, coords?: vector3, distance?: number): table
 function MSK.GetClosestPlayers(coords, distance) end
 
----Sendet eine Nachricht an einen Discord-Webhook. Ohne gültige https-URL wird
----nichts gesendet und false geliefert. Nur Server.
+---Sends a message to a Discord webhook. Without a valid https URL
+---nothing is sent and false is returned. Server only.
 ---@param webhook string
 ---@param botColor? number|string
 ---@param botName? string
@@ -653,28 +678,28 @@ function MSK.GetClosestPlayers(coords, distance) end
 ---@param description? string
 ---@param fields? table
 ---@param footer? { text: string, link?: string }
----@param time? string os.date-Format, wird an den Footer angehängt.
+---@param time? string os.date format, appended to the footer.
 ---@return false|nil
 function MSK.AddWebhook(webhook, botColor, botName, botAvatar, title, description, fields, footer, time) end
 
 --------------------------------------------------------------------------------
--- Cron (nur Server)
+-- Cron (server only)
 --------------------------------------------------------------------------------
 
----Alias von MSK.Cron.Create.
----@param date MSKCronDate|number Intervall, Uhrzeit oder Unix-Zeitstempel.
+---Alias of MSK.Cron.Create.
+---@param date MSKCronDate|number Interval, time of day or Unix timestamp.
 ---@param data any
 ---@param cb fun(uniqueId: number, data: any, info: MSKCronInfo)
----@return number|nil uniqueId ID für MSK.DeleteCron, nil bei ungültigen Argumenten.
+---@return number|nil uniqueId ID for MSK.DeleteCron, nil on invalid arguments.
 function MSK.CreateCron(date, data, cb) end
 
----Alias von MSK.Cron.Delete.
+---Alias of MSK.Cron.Delete.
 ---@param id string
 ---@return boolean
 function MSK.DeleteCron(id) end
 
 --------------------------------------------------------------------------------
--- Flache Aliase auf Context und Menu
+-- Flat aliases for Context and Menu
 --------------------------------------------------------------------------------
 
 ---@param id string
@@ -703,7 +728,7 @@ function MSK.GetOpenContext() end
 function MSK.RegisterMenu(id, data, cb) end
 
 ---@param idOrData string|MSKMenuData
----@param startIndex? number Eintrag, auf dem die Auswahl startet.
+---@param startIndex? number Entry the selection starts on.
 ---@overload fun(playerId: number, idOrData: string|MSKMenuData, startIndex?: number)
 function MSK.ShowMenu(idOrData, startIndex) end
 
@@ -712,14 +737,14 @@ function MSK.ShowMenu(idOrData, startIndex) end
 ---@param updatedData MSKMenuItem
 function MSK.UpdateMenu(menuId, dataId, updatedData) end
 
----Ersetzt alle Einträge oder mit index nur diesen einen. Ein offenes Menü
----aktualisiert sich sofort. Nur Client.
+---Replaces all entries, or with index only that one. An open menu
+---updates immediately. Client only.
 ---@param menuId string
 ---@param options MSKMenuItem[]|MSKMenuItem
 ---@param index? number
 function MSK.SetMenuOptions(menuId, options, index) end
 
----Schließt das offene Menü. key geht an onClose, false schließt ohne onClose.
+---Closes the open menu. key is passed to onClose, false closes without onClose.
 ---@param key? string|false
 ---@overload fun(playerId: number)
 function MSK.HideMenu(key) end
@@ -728,62 +753,62 @@ function MSK.HideMenu(key) end
 function MSK.GetOpenMenu() end
 
 --------------------------------------------------------------------------------
--- Backwards-Compat-Aliase aus aliases.lua
+-- Backwards-compat aliases from aliases.lua
 --------------------------------------------------------------------------------
 
----Alias von MSK.Timeout.Set.
+---Alias of MSK.Timeout.Set.
 ---@param ms number
 ---@param cb fun(data: any)
 ---@param data? any
 ---@return number requestId
 function MSK.AddTimeout(ms, cb, data) end
 
----Alias von MSK.Timeout.Clear.
+---Alias of MSK.Timeout.Clear.
 ---@param requestId number
 function MSK.DelTimeout(requestId) end
 
----Alias von MSK.Table.Contains.
+---Alias of MSK.Table.Contains.
 ---@param tbl table
 ---@param val any
 ---@return boolean
 function MSK.Table_Contains(tbl, val) end
 
----Alias von MSK.Table.Dump.
+---Alias of MSK.Table.Dump.
 ---@param tbl table
 ---@return string
 function MSK.DumpTable(tbl) end
 
----Achtung: MSK.Trim nutzt die invertierte Bool-Semantik aus v2
----(String.TrimLegacy), während exports.msk_core:Trim auf String.Trim zeigt.
+---Note: MSK.Trim uses the inverted bool semantics from v2
+---(String.TrimLegacy), while exports.msk_core:Trim points to String.Trim.
 ---@param str string
 ---@param bool? boolean
 ---@return string
 function MSK.Trim(str, bool) end
 
----Alias von MSK.Request.AnimDict. Nur Client.
+---Alias of MSK.Request.AnimDict. Client only.
 ---@param animDict string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return string
 function MSK.LoadAnimDict(animDict, timeout) end
 
----Alias von MSK.Request.Model. Nur Client.
+---Alias of MSK.Request.Model. Client only.
 ---@param model string|number
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return number hash
 function MSK.LoadModel(model, timeout) end
 
----Alias von MSK.Coords.Active.
+---Alias of MSK.Coords.Active.
 ---@return boolean
 ---@overload fun(playerId: number): boolean
 function MSK.DoesShowCoords() end
 
 --------------------------------------------------------------------------------
 -- Export-Proxies
--- Jeder Name, der weder Modul noch Alias ist, wird von import.lua automatisch
--- auf exports.msk_core:<Name> weitergeleitet. Die gebräuchlichsten davon:
+-- Any name that is neither a module nor an alias is automatically forwarded
+-- by import.lua to exports.msk_core:<Name>. The most common ones:
 --------------------------------------------------------------------------------
 
----Zufällige Ziffernfolge.
+---Random sequence of digits.
 ---@param length number
 ---@return string
 function MSK.GetRandomNumber(length) end
@@ -853,7 +878,7 @@ function MSK.TableReverse(tbl) end
 ---@return table
 function MSK.TableClone(tbl) end
 
----Liefert einen Iterator, der die Tabelle sortiert durchläuft.
+---Returns an iterator that traverses the table in sorted order.
 ---@param tbl table
 ---@param order? fun(tbl: table, a: any, b: any): boolean
 ---@return fun(): any, any
@@ -868,8 +893,8 @@ function MSK.SetTimeout(ms, cb, data) end
 ---@param requestId number
 function MSK.ClearTimeout(requestId) end
 
----Wartet, bis cb einen Wert ungleich nil liefert. false wartet ohne Limit.
----@param timeout? number|false Standard 1000 ms.
+---Waits until cb returns a value other than nil. false waits without a limit.
+---@param timeout? number|false Default 1000 ms.
 ---@param cb fun(): any
 ---@param errMessage? string
 ---@return any
@@ -888,9 +913,9 @@ function MSK.VectorToVector(vec) end
 ---@return vector3|vector4|nil
 function MSK.TableToVector(coords, toType) end
 
----Alias von MSK.Progress.Start. Die Tabellenform wartet und liefert true, wenn
----die Leiste durchgelaufen ist, sonst false. Die Form (duration, text, color)
----wartet nicht und ist veraltet, stattdessen eine Tabelle übergeben.
+---Alias of MSK.Progress.Start. The table form waits and returns true if
+---the bar completed, otherwise false. The form (duration, text, color)
+---does not wait and is deprecated, pass a table instead.
 ---@param data MSKProgressData
 ---@return boolean|nil finished
 ---@overload fun(playerId: number, data: MSKProgressData): boolean|nil
@@ -898,7 +923,7 @@ function MSK.TableToVector(coords, toType) end
 ---@overload fun(playerId: number, duration: number, text?: string, color?: string)
 function MSK.Progressbar(data) end
 
----Wie MSK.Progressbar, als Kreis dargestellt.
+---Like MSK.Progressbar, displayed as a circle.
 ---@param data MSKProgressData
 ---@return boolean|nil finished
 ---@overload fun(playerId: number, data: MSKProgressData): boolean|nil
@@ -906,25 +931,25 @@ function MSK.Progressbar(data) end
 ---@overload fun(playerId: number, duration: number, text?: string, color?: string)
 function MSK.ProgressCircle(data) end
 
----Alias von MSK.Progress.Stop.
+---Alias of MSK.Progress.Stop.
 ---@overload fun(playerId: number)
 function MSK.ProgressStop() end
 
----Nur Client.
+---Client only.
 ---@return boolean active, MSKProgressData|nil data
 function MSK.ProgressActive() end
 
----Zeigt die TextUI. Ein erneuter Aufruf aktualisiert sie, mit gleichen Daten
----passiert nichts. Die Form (key, text, color) ist veraltet, stattdessen eine
----Tabelle übergeben.
+---Shows the TextUI. Calling it again updates it, with identical data
+---nothing happens. The form (key, text, color) is deprecated, pass a
+---table instead.
 ---@param data MSKTextUIData
 ---@overload fun(playerId: number, data: MSKTextUIData)
 ---@overload fun(key: string, text: string, color?: string)
 ---@overload fun(playerId: number, key: string, text: string, color?: string)
 function MSK.ShowTextUI(data) end
 
----Für Aufrufe in jedem Frame: blendet sich etwa 100 ms nach dem letzten Aufruf
----selbst aus. Die Form (key, text, color) ist veraltet.
+---For calls in every frame: hides itself about 100 ms after the last call.
+---The form (key, text, color) is deprecated.
 ---@param data MSKTextUIData
 ---@overload fun(playerId: number, data: MSKTextUIData)
 ---@overload fun(key: string, text: string, color?: string)
@@ -934,12 +959,12 @@ function MSK.ShowTextUIThread(data) end
 ---@overload fun(playerId: number)
 function MSK.HideTextUI() end
 
----Nur Client.
+---Client only.
 ---@return boolean open, MSKTextUIData|nil data
 function MSK.TextUIActive() end
 
----Einfaches Eingabefeld. Alias von MSK.Input.Open.
----@deprecated Stattdessen MSK.InputDialog bzw. MSK.Input.Dialog nutzen.
+---Simple input field. Alias of MSK.Input.Open.
+---@deprecated Use MSK.InputDialog or MSK.Input.Dialog instead.
 ---@param header string
 ---@param placeholder? string
 ---@param field? boolean
@@ -948,7 +973,7 @@ function MSK.TextUIActive() end
 ---@overload fun(playerId: number, header: string, placeholder?: string, field?: boolean): string|number|nil
 function MSK.Input(header, placeholder, field, cb) end
 
----@deprecated Stattdessen MSK.InputDialog bzw. MSK.Input.Dialog nutzen.
+---@deprecated Use MSK.InputDialog or MSK.Input.Dialog instead.
 ---@param header string
 ---@param placeholder? string
 ---@param field? boolean
@@ -960,35 +985,35 @@ function MSK.OpenInput(header, placeholder, field, cb) end
 ---@overload fun(playerId: number)
 function MSK.CloseInput() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.InputActive() end
 
----Öffnet einen Eingabedialog mit mehreren Feldern und wartet auf die Werte.
----Liefert nil bei Abbruch, sonst die Werte nach Zeilennummer und zusätzlich
----nach id, wo eine gesetzt ist. Leere optionale Felder sind nil.
----Auf dem Server werden die Werte des Clients noch einmal gegen die Zeilen
----geprüft. Alias von MSK.Input.Dialog.
+---Opens an input dialog with multiple fields and waits for the values.
+---Returns nil on cancel, otherwise the values by row number and additionally
+---by id where one is set. Empty optional fields are nil.
+---On the server the client's values are validated against the rows
+---once more. Alias of MSK.Input.Dialog.
 ---@param header string
----@param rows (MSKInputDialogRow|string)[] Ein Text ist die Kurzform für ein Textfeld mit diesem Label.
+---@param rows (MSKInputDialogRow|string)[] A string is shorthand for a text field with that label.
 ---@param options? MSKInputDialogOptions
 ---@return table|nil values
 ---@overload fun(playerId: number, header: string, rows: (MSKInputDialogRow|string)[], options?: MSKInputDialogOptions): table|nil
 function MSK.InputDialog(header, rows, options) end
 
----Schließt einen offenen Dialog, wer darauf wartet, bekommt nil.
+---Closes an open dialog, anyone waiting on it gets nil.
 ---@overload fun(playerId: number)
 function MSK.CloseInputDialog() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.InputDialogActive() end
 
----Numpad mit Code. Alias von MSK.Numpad.Open. Blockiert, oder ruft cb in jedem
----Fall auf, auch bei Abbruch. reason ist "wrong", "maxAttempts", "cancelled",
----"busy" oder auf dem Server "invalid". In der Server-Form verlässt der Code
----den Server nie. Die Form (pin, showPin, cb) ist veraltet, stattdessen eine
----Tabelle übergeben.
+---Numpad with a code. Alias of MSK.Numpad.Open. Blocks, or calls cb in every
+---case, even on cancel. reason is "wrong", "maxAttempts", "cancelled",
+---"busy" or on the server "invalid". In the server form the code never leaves
+---the server. The form (pin, showPin, cb) is deprecated, pass a
+---table instead.
 ---@param data MSKNumpadOptions
 ---@param cb? fun(ok: boolean, reason?: string)
 ---@return boolean|nil ok, string|nil reason
@@ -997,16 +1022,16 @@ function MSK.InputDialogActive() end
 ---@overload fun(playerId: number, pin: string|number, showPin?: boolean): boolean, string|nil
 function MSK.Numpad(data, cb) end
 
----Alias von MSK.Numpad.
+---Alias of MSK.Numpad.
 ---@param data MSKNumpadOptions
 ---@param cb? fun(ok: boolean, reason?: string)
 ---@return boolean|nil ok, string|nil reason
 ---@overload fun(playerId: number, data: MSKNumpadOptions): boolean, string|nil
 function MSK.OpenNumpad(data, cb) end
 
----Fragt Ziffern ab, ohne sie mit einem Code zu vergleichen. Liefert die Ziffern
----als Text oder nil bei Abbruch. Auf dem Server kommen die Ziffern vom Client,
----also selbst prüfen. Alias von MSK.Numpad.Input.
+---Asks for digits without comparing them to a code. Returns the digits
+---as text or nil on cancel. On the server the digits come from the client,
+---so validate them yourself. Alias of MSK.Numpad.Input.
 ---@param data? MSKNumpadInputOptions
 ---@param cb? fun(digits?: string, reason?: string)
 ---@return string|nil digits, string|nil reason
@@ -1016,120 +1041,120 @@ function MSK.NumpadInput(data, cb) end
 ---@overload fun(playerId: number)
 function MSK.CloseNumpad() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.NumpadActive() end
 
----Modaler Dialog, der auf die Antwort des Spielers wartet. Liefert "confirm",
----"cancel", "timeout" oder nil, wenn der Dialog per Code geschlossen wurde.
----Alias von MSK.Alert.Show. Nur Client.
+---Modal dialog that waits for the player's answer. Returns "confirm",
+---"cancel", "timeout" or nil if the dialog was closed by code.
+---Alias of MSK.Alert.Show. Client only.
 ---@param data MSKAlertData
 ---@return "confirm"|"cancel"|"timeout"|nil
 function MSK.AlertDialog(data) end
 
----Nur Client.
+---Client only.
 function MSK.CloseAlertDialog() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.AlertActive() end
 
----Startet einen Skillcheck und liefert true, wenn jede Runde bestanden wurde.
----Das Ergebnis kommt vom Client, also nicht als einzige Prüfung für Wertvolles
----nutzen. Alias von MSK.Skillcheck.Start. Nur Client.
----@param difficulty? "easy"|"medium"|"hard"|{ areaSize?: number, speedMultiplier?: number }|("easy"|"medium"|"hard"|{ areaSize?: number, speedMultiplier?: number })[] Eine Liste steht für mehrere Runden.
----@param inputs? string[] Tasten, aus denen pro Runde gewählt wird, Standard { "e" }.
+---Starts a skill check and returns true if every round was passed.
+---The result comes from the client, so do not use it as the only check for anything
+---valuable. Alias of MSK.Skillcheck.Start. Client only.
+---@param difficulty? "easy"|"medium"|"hard"|{ areaSize?: number, speedMultiplier?: number }|("easy"|"medium"|"hard"|{ areaSize?: number, speedMultiplier?: number })[] A list stands for multiple rounds.
+---@param inputs? string[] Keys to pick from per round, default { "e" }.
 ---@return boolean passed
 function MSK.Skillcheck(difficulty, inputs) end
 
----Beendet einen laufenden Skillcheck als nicht bestanden. Nur Client.
+---Ends a running skill check as failed. Client only.
 function MSK.CancelSkillcheck() end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.SkillcheckActive() end
 
----Kopiert Text in die Zwischenablage des Spielers. Alias von MSK.Clipboard.Set.
----Nur Client.
+---Copies text to the player's clipboard. Alias of MSK.Clipboard.Set.
+---Client only.
 ---@param text string|number
 function MSK.SetClipboard(text) end
 
----Eine Spielereinstellung, ohne key eine Kopie aller Einstellungen.
----Alias von MSK.Settings.Get. Nur Client.
+---A player setting, without key a copy of all settings.
+---Alias of MSK.Settings.Get. Client only.
 ---@param key? "locale"|"notifyPosition"|"notifySound"
 ---@return any
 function MSK.GetSetting(key) end
 
----Nur Client.
+---Client only.
 ---@return table
 function MSK.GetSettings() end
 
----Ändert eine Spielereinstellung. false, wenn der Wert nicht passt.
----Alias von MSK.Settings.Set. Nur Client.
+---Changes a player setting. false if the value is not valid.
+---Alias of MSK.Settings.Set. Client only.
 ---@param key "locale"|"notifyPosition"|"notifySound"
 ---@param value any
 ---@return boolean changed
 function MSK.SetSetting(key, value) end
 
----Öffnet das Einstellungsmenü. Nur Client.
+---Opens the settings menu. Client only.
 function MSK.OpenSettings() end
 
----Fügt der ersten Ebene des Radialmenüs einen oder mehrere Einträge hinzu.
----Ein Eintrag mit vorhandener id ersetzt den alten. Alias von MSK.Radial.Add.
----Nur Client.
+---Adds one or more entries to the first level of the radial menu.
+---An entry with an existing id replaces the old one. Alias of MSK.Radial.Add.
+---Client only.
 ---@param items MSKRadialItem|MSKRadialItem[]
 function MSK.AddRadialItem(items) end
 
----Nur Client.
+---Client only.
 ---@param id string
 ---@return boolean removed
 function MSK.RemoveRadialItem(id) end
 
----Entfernt alle Einträge der aufrufenden Resource. Nur Client.
+---Removes all entries of the calling resource. Client only.
 function MSK.ClearRadialItems() end
 
----Registriert ein Untermenü, das Einträge über ihr Feld menu öffnen. Nur Client.
+---Registers a submenu that entries open via their menu field. Client only.
 ---@param menu MSKRadialMenu
 function MSK.RegisterRadial(menu) end
 
----Nur Client.
+---Client only.
 ---@param id string
 function MSK.UnregisterRadial(id) end
 
----Nur Client.
+---Client only.
 function MSK.ShowRadial() end
 
----Nur Client.
+---Client only.
 function MSK.HideRadial() end
 
----Sperrt das Radialmenü (true, Standard) oder gibt es wieder frei (false).
----Nur Client.
+---Locks the radial menu (true, default) or unlocks it again (false).
+---Client only.
 ---@param state? boolean
 function MSK.DisableRadial(state) end
 
----Nur Client.
+---Client only.
 ---@return boolean
 function MSK.IsRadialOpen() end
 
----Id des offenen Untermenüs, nil auf der ersten Ebene oder wenn zu. Nur Client.
+---Id of the open submenu, nil on the first level or when closed. Client only.
 ---@return string|nil
 function MSK.GetRadialId() end
 
----Registriert einen Hook, der eine Aktion mit false ablehnen kann. Höhere
----Priorität läuft zuerst. Alias von MSK.Hook.Register.
+---Registers a hook that can reject an action by returning false. Higher
+---priority runs first. Alias of MSK.Hook.Register.
 ---@param event string
 ---@param cb fun(payload: any): boolean|nil
 ---@param options? { priority?: number }
 ---@return integer id
 function MSK.RegisterHook(event, cb, options) end
 
----Entfernt einen Hook, nur die registrierende Resource darf das.
+---Removes a hook, only the registering resource may do that.
 ---@param id integer
 ---@return boolean removed
 function MSK.RemoveHook(id) end
 
----Führt alle Hooks eines Events aus. false plus die ablehnende Resource,
----sobald ein Hook false liefert, sonst true.
+---Runs all hooks of an event. Returns false plus the rejecting resource
+---as soon as a hook returns false, otherwise true.
 ---@param event string
 ---@param payload? any
 ---@return boolean allowed, string|nil refusedBy
@@ -1139,60 +1164,60 @@ function MSK.TriggerHook(event, payload) end
 ---@return boolean
 function MSK.HasHook(event) end
 
----Alias von MSK.Cron.Schedule. Führt cb aus, sobald der Cron-Ausdruck passt,
----etwa "*/15 * * * *" oder "@daily". Liefert cb false, wird die Aufgabe
----entfernt. Nur Server.
+---Alias of MSK.Cron.Schedule. Runs cb whenever the cron expression matches,
+---e.g. "*/15 * * * *" or "@daily". If cb returns false, the task is
+---removed. Server only.
 ---@param expression string
 ---@param cb fun(id: number, info: { timestamp: number, runs: number }): boolean|nil
 ---@return number id
 function MSK.ScheduleCron(expression, cb) end
 
----Nur Server.
+---Server only.
 ---@param id number
 ---@return boolean removed
 function MSK.UnscheduleCron(id) end
 
----Zeitstempel des nächsten Laufs einer Aufgabe oder eines Ausdrucks. Nur Server.
+---Timestamp of the next run of a task or an expression. Server only.
 ---@param idOrExpression number|string
 ---@return number|nil timestamp
 function MSK.CronNextRun(idOrExpression) end
 
----Prüft einen Cron-Ausdruck, ohne etwas zu planen. Nur Server.
+---Validates a cron expression without scheduling anything. Server only.
 ---@param expression string
 ---@return boolean valid, string|nil reason
 function MSK.IsCronValid(expression) end
 
----Liest die Fahrzeugeigenschaften, nil wenn das Fahrzeug nicht existiert.
----Alias von MSK.VehicleProperties.Get. Nur Client.
+---Reads the vehicle properties, nil if the vehicle does not exist.
+---Alias of MSK.VehicleProperties.Get. Client only.
 ---@param vehicle number
 ---@return table|nil props
 function MSK.GetVehicleProperties(vehicle) end
 
----Wendet Fahrzeugeigenschaften an, Felder mit nil bleiben unberührt. Greift nur
----auf dem Client, dem das Fahrzeug gehört. Mit fixVehicle wird vorher repariert
----und der gespeicherte Schaden übersprungen. Alias von MSK.VehicleProperties.Set.
----Nur Client.
+---Applies vehicle properties, fields that are nil stay untouched. Only takes effect
+---on the client that owns the vehicle. With fixVehicle it is repaired first
+---and the stored damage is skipped. Alias of MSK.VehicleProperties.Set.
+---Client only.
 ---@param vehicle number
 ---@param props table
 ---@param fixVehicle? boolean
 ---@return boolean applied
 function MSK.SetVehicleProperties(vehicle, props, fixVehicle) end
 
----Reiht einen Log-Eintrag für den konfigurierten Log-Dienst ein (Loki, Datadog,
----Fivemanage). Alias von MSK.Logger.Log. Nur Server.
----@param source? number Spieler-ID, 0 oder nil für den Server.
----@param event string Kurzer Name, etwa "shop:purchase".
+---Queues a log entry for the configured log service (Loki, Datadog,
+---Fivemanage). Alias of MSK.Logger.Log. Server only.
+---@param source? number Player ID, 0 or nil for the server.
+---@param event string Short name, e.g. "shop:purchase".
 ---@param message string
----@param extra? table Zusätzliche, JSON-fähige Daten.
----@param tags? string|table key:value-Paare als "a:1,b:2", Liste oder Tabelle.
----@return boolean queued false, wenn kein Log-Dienst konfiguriert ist.
+---@param extra? table Additional JSON-serializable data.
+---@param tags? string|table key:value pairs as "a:1,b:2", a list or a table.
+---@return boolean queued false if no log service is configured.
 function MSK.LoggerLog(source, event, message, extra, tags) end
 
----Ob ein Log-Dienst konfiguriert ist. Nur Server.
+---Whether a log service is configured. Server only.
 ---@return boolean
 function MSK.LoggerEnabled() end
 
----Schaltet die Koordinatenanzeige um (zweiter Aufruf blendet sie aus).
+---Toggles the coordinate display (a second call hides it).
 ---@overload fun(playerId: number)
 function MSK.ShowCoords() end
 
@@ -1202,95 +1227,95 @@ function MSK.HideCoords() end
 ---@return boolean
 function MSK.CoordsActive() end
 
----Client: kopiert coords oder die eigene Position in die Zwischenablage.
----Server: kopiert die Position von targetId (Standard playerId) bei playerId.
+---Client: copies coords or your own position to the clipboard.
+---Server: copies the position of targetId (default playerId) for playerId.
 ---@param coords? vector3|vector4
 ---@overload fun(playerId: number, targetId?: number)
 function MSK.CopyCoords(coords) end
 
----Alias von MSK.Points.Add. Nur Client.
+---Alias of MSK.Points.Add. Client only.
 ---@param properties MSKPointProperties
 ---@return MSKPoint
 function MSK.AddPoint(properties) end
 
----Nur Client.
+---Client only.
 ---@param pointId number
 ---@return boolean
 function MSK.RemovePoint(pointId) end
 
----Nur Client.
+---Client only.
 ---@return table<number, MSKPoint>
 function MSK.GetAllPoints() end
 
----Nur Client.
+---Client only.
 ---@return MSKPoint|nil
 function MSK.GetClosestPoint() end
 
----Alle Points, in denen der Spieler gerade steht, der nächste zuerst.
----Nur Client.
+---All points the player is currently standing in, closest first.
+---Client only.
 ---@return MSKPoint[]
 function MSK.GetNearbyPoints() end
 
----Nur Client.
+---Client only.
 ---@param animDict string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return string
 function MSK.RequestAnimDict(animDict, timeout) end
 
----Nur Client.
+---Client only.
 ---@param model string|number
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return number hash
 function MSK.RequestModel(model, timeout) end
 
----Nur Client.
+---Client only.
 ---@param animSet string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return string
 function MSK.RequestAnimSet(animSet, timeout) end
 
----Nur Client.
+---Client only.
 ---@param ptFxName string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return string
 function MSK.RequestPtfxAsset(ptFxName, timeout) end
 
----Nur Client.
+---Client only.
 ---@param textureDict string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return string
 function MSK.RequestTextureDict(textureDict, timeout) end
 
----Nur Client.
+---Client only.
 ---@param scaleformName string
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@return number
 function MSK.RequestScaleformMovie(scaleformName, timeout) end
 
----Allgemeiner Streaming-Request: ruft request(asset, ...) auf und wartet, bis
----hasLoaded(asset) true liefert. Nur Client.
+---Generic streaming request: calls request(asset, ...) and waits until
+---hasLoaded(asset) returns true. Client only.
 ---@param request fun(asset: any, ...: any)
 ---@param hasLoaded fun(asset: any): boolean
----@param assetType string Nur für die Log-Meldung.
+---@param assetType string Only used for the log message.
 ---@param asset any
----@param timeout? number Standard 30000 ms.
+---@param timeout? number Default 30000 ms.
 ---@param ... any
 ---@return any asset
 function MSK.RequestStreaming(request, hasLoaded, assetType, asset, timeout, ...) end
 
----Strahl vom Spieler nach vorne. Liefert die getroffene Entity oder false,
----auch wenn nichts getroffen wurde. Nur Client.
----@param distance? number Standard 5.0
+---Casts a ray forward from the player. Returns the hit entity or false,
+---including when nothing was hit. Client only.
+---@param distance? number Default 5.0
 ---@param flag? number|"none"|"all"|"world"|"vehicle"|"ped"|"object"|"water"|"glass"|"river"|"foliage"
 ---@return number|false entityHit
 function MSK.RequestRaycast(distance, flag) end
 
----Strahl zwischen zwei Punkten, wartet höchstens eine Sekunde. Nur Client.
+---Casts a ray between two points, waits at most one second. Client only.
 ---@param from vector3
 ---@param to vector3
----@param flags? number Shape-Test-Flags, Standard 511.
----@param ignore? number Standard 4.
----@param ignoreEntity? number Entity, durch die der Strahl geht, Standard der eigene Ped.
+---@param flags? number Shape test flags, default 511.
+---@param ignore? number Default 4.
+---@param ignoreEntity? number Entity the ray passes through, defaults to your own ped.
 ---@return boolean hit, number entityHit, vector3 endCoords, vector3 surfaceNormal, number materialHash
 function MSK.RequestRaycastFromCoords(from, to, flags, ignore, ignoreEntity) end
 
@@ -1318,7 +1343,7 @@ function MSK.BreakingNews(title, text, footer, duration) end
 ---@overload fun(playerId: number, duration?: number)
 function MSK.TrafficMovie(duration) end
 
----@deprecated Stattdessen MSK.FreemodeMessage oder MSK.PopupWarning nutzen.
+---@deprecated Use MSK.FreemodeMessage or MSK.PopupWarning instead.
 ---@param title string
 ---@param text string
 ---@param typ? number 1 = FreemodeMessage, 2 = PopupWarning.
@@ -1326,11 +1351,11 @@ function MSK.TrafficMovie(duration) end
 ---@overload fun(playerId: number, title: string, text: string, typ?: number, duration?: number)
 function MSK.ScaleformAnnounce(title, text, typ, duration) end
 
----Prüft die Resource-Version gegen GitHub. Nur Server.
+---Checks the resource version against GitHub. Server only.
 ---@param repo MSKCheckRepo
 function MSK.CheckVersion(repo) end
 
----Nur Server.
+---Server only.
 ---@param resource string
 ---@param minimumVersion? string
 ---@param showMessage? boolean
@@ -1338,7 +1363,7 @@ function MSK.CheckVersion(repo) end
 function MSK.CheckDependency(resource, minimumVersion, showMessage) end
 
 --------------------------------------------------------------------------------
--- Typen für flache Funktionen
+-- Types for flat functions
 --------------------------------------------------------------------------------
 
 ---@alias MSKNotifyPosition
@@ -1351,30 +1376,30 @@ function MSK.CheckDependency(resource, minimumVersion, showMessage) end
 ---| "bottom"
 ---| "bottom-right"
 
----GTA-Sound statt des NUI-Sounds.
+---GTA sound instead of the NUI sound.
 ---@class MSKNotifySound
 ---@field name string
 ---@field set string
----@field bank? string Audio-Bank, wird bei Bedarf geladen.
+---@field bank? string Audio bank, loaded if needed.
 
----Alles über title, message, type und duration hinaus gilt nur für die MSK-UI.
----Externe Adapter (okok, qb-core, bulletin, native, custom) bekommen, was sie verstehen.
+---Everything beyond title, message, type and duration only applies to the MSK UI.
+---External adapters (okok, qb-core, bulletin, native, custom) get whatever they understand.
 ---@class MSKNotifyData
----@field id? string|number Eine sichtbare Benachrichtigung mit derselben id wird aktualisiert.
----@field title? string Ohne Titel wird die Benachrichtigung kompakt.
+---@field id? string|number A visible notification with the same id is updated.
+---@field title? string Without a title the notification is compact.
 ---@field message string
----@field description? string Ersatz für message.
----@field type? MSKNotifyType Standard "info".
----@field duration? number Standard 5000 ms.
----@field icon? string Überschreibt das Icon des Typs.
+---@field description? string Replacement for message.
+---@field type? MSKNotifyType Default "info".
+---@field duration? number Default 5000 ms.
+---@field icon? string Overrides the icon of the type.
 ---@field iconColor? string
 ---@field iconAnimation? MSKIconAnimation
----@field position? MSKNotifyPosition Greift nur, solange der Spieler "Automatisch" eingestellt hat.
----@field showDuration? boolean false blendet den Fortschrittsbalken aus.
----@field sound? boolean|MSKNotifySound false ist stumm.
+---@field position? MSKNotifyPosition Only applies as long as the player has set "Automatic".
+---@field showDuration? boolean false hides the progress bar.
+---@field sound? boolean|MSKNotifySound false is silent.
 
--- TextUI-, Numpad-, Alert- und Input-Dialog-Typen stehen in types.lua und
--- types_new.lua, MSKIconAnimation in types.lua.
+-- TextUI, Numpad, Alert, input dialog types and MSKIconAnimation live in
+-- types.lua.
 
 ---@class MSKNearbyEntity
 ---@field entity number
@@ -1382,7 +1407,7 @@ function MSK.CheckDependency(resource, minimumVersion, showMessage) end
 ---@field distance number
 
 ---@class MSKNearbyPlayer
----@field playerId number Lokaler Player-Index.
+---@field playerId number Local player index.
 ---@field serverId number
 ---@field ped number
 ---@field coords vector3
@@ -1399,10 +1424,10 @@ function MSK.CheckDependency(resource, minimumVersion, showMessage) end
 ---| "train"
 
 ---@class MSKSpawnVehicleOptions
----@field heading? number Wenn coords keinen Heading enthalten.
----@field type? MSKVehicleType Ohne Angabe wird ein Client gefragt.
+---@field heading? number If coords do not contain a heading.
+---@field type? MSKVehicleType If omitted, a client is asked.
 ---@field plate? string
----@field props? table Fahrzeugeigenschaften, der besitzende Client wendet sie an.
----@field bucket? number Routing-Bucket.
----@field warp? number Server-ID eines Spielers, der auf den Fahrersitz gesetzt wird.
----@field playerId? number Spieler, der nach dem Fahrzeugtyp gefragt wird.
+---@field props? table Vehicle properties, applied by the owning client.
+---@field bucket? number Routing bucket.
+---@field warp? number Server ID of a player who is put into the driver's seat.
+---@field playerId? number Player who is asked for the vehicle type.

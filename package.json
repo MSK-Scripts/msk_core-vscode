@@ -1,13 +1,22 @@
 {
   "name": "msk-core-lua",
   "displayName": "MSK Core (FiveM) IntelliSense",
-  "description": "IntelliSense, Autocompletion und Typen für die MSK.* API der msk_core Library (FiveM).",
-  "version": "1.2.0",
+  "description": "IntelliSense, autocompletion and types for the MSK.* API of the msk_core library (FiveM).",
+  "version": "1.3.0",
   "publisher": "musiker15",
+  "author": {
+    "name": "Moritz Kohm (MSK Scripts)",
+    "url": "https://www.msk-scripts.de"
+  },
   "license": "MIT",
+  "pricing": "Free",
+  "homepage": "https://github.com/MSK-Scripts/msk_core-vscode#readme",
+  "bugs": {
+    "url": "https://github.com/MSK-Scripts/msk_core-vscode/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Musiker15/msk_core-vscode"
+    "url": "https://github.com/MSK-Scripts/msk_core-vscode"
   },
   "engines": {
     "vscode": "^1.71.0"
@@ -19,11 +28,18 @@
   "keywords": [
     "Lua",
     "FiveM",
+    "CfxLua",
     "MSK",
     "msk_core",
+    "ESX",
+    "QBCore",
     "IntelliSense"
   ],
   "icon": "logo.png",
+  "galleryBanner": {
+    "color": "#0a0b0d",
+    "theme": "dark"
+  },
   "extensionDependencies": [
     "sumneko.lua"
   ],
@@ -31,6 +47,9 @@
     "onLanguage:lua"
   ],
   "main": "./extension.js",
+  "scripts": {
+    "vscode:uninstall": "node ./uninstall.js"
+  },
   "contributes": {
     "configuration": {
       "title": "MSK Core",
@@ -38,19 +57,24 @@
         "mskCore.enableLibrary": {
           "type": "boolean",
           "default": true,
-          "description": "Bindet die MSK.* Definitionen automatisch in Lua.workspace.library ein."
+          "description": "Adds the MSK.* definitions to Lua.workspace.library."
+        },
+        "mskCore.setRuntime": {
+          "type": "boolean",
+          "default": true,
+          "description": "Sets Lua.runtime.version to Lua 5.4 for workspaces containing a fxmanifest.lua, unless the workspace already defines a runtime."
         }
       }
     },
     "commands": [
       {
         "command": "mskCore.reload",
-        "title": "Definitionen neu einbinden",
+        "title": "Reload definitions",
         "category": "MSK Core"
       },
       {
         "command": "mskCore.showLibraryPath",
-        "title": "Pfad der Definitionen anzeigen",
+        "title": "Show definitions path",
         "category": "MSK Core"
       }
     ]

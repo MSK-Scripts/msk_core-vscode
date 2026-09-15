@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check tag matches package.json
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$PKG_VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Package
+        run: |
+          node --check extension.js
+          node --check uninstall.js
+          npx --yes @vscode/vsce package --out "msk-core-lua-${GITHUB_REF_NAME#v}.vsix"
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::warning::VSCE_PAT is not set, skipping the VS Code Marketplace"
+            exit 0
+          fi
+          npx --yes @vscode/vsce publish --packagePath "msk-core-lua-${GITHUB_REF_NAME#v}.vsix" --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::warning::OVSX_PAT is not set, skipping Open VSX"
+            exit 0
+          fi
+          npx --yes ovsx publish "msk-core-lua-${GITHUB_REF_NAME#v}.vsix" --pat "$OVSX_PAT"
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v head="## [$VERSION]" '
+            index($0, head) == 1 { found = 1; next }
+            found && index($0, "## [") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "See CHANGELOG.md" > notes.md
+
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "msk-core-lua-$VERSION.vsix" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "msk-core-lua-$VERSION.vsix" \
+              --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
