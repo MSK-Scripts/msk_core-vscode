@@ -31,12 +31,15 @@ jobs:
           node --check uninstall.js
           npx --yes @vscode/vsce package --out "msk-core-lua-${GITHUB_REF_NAME#v}.vsix"
 
+      # Without VSCE_PAT the .vsix is uploaded to the Marketplace by hand. The
+      # last step writes the download and upload links to the job summary.
       - name: Publish to VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           if [ -z "$VSCE_PAT" ]; then
-            echo "::warning::VSCE_PAT is not set, skipping the VS Code Marketplace"
+            echo "::notice::VSCE_PAT is not set, the Marketplace upload has to be done manually (see job summary)"
+            echo "MARKETPLACE_MANUAL=1" >> "$GITHUB_ENV"
             exit 0
           fi
           npx --yes @vscode/vsce publish --packagePath "msk-core-lua-${GITHUB_REF_NAME#v}.vsix" --pat "$VSCE_PAT"
@@ -48,6 +51,12 @@ jobs:
           if [ -z "$OVSX_PAT" ]; then
             echo "::warning::OVSX_PAT is not set, skipping Open VSX"
             exit 0
+          fi
+          NAMESPACE="$(node -p "require('./package.json').publisher")"
+          STATUS="$(curl -s -o /dev/null -w '%{http_code}' "https://open-vsx.org/api/$NAMESPACE")"
+          if [ "$STATUS" = "404" ]; then
+            echo "Namespace $NAMESPACE does not exist yet, creating it"
+            npx --yes ovsx create-namespace "$NAMESPACE" --pat "$OVSX_PAT"
           fi
           npx --yes ovsx publish "msk-core-lua-${GITHUB_REF_NAME#v}.vsix" --pat "$OVSX_PAT"
 
@@ -69,3 +78,21 @@ jobs:
             gh release create "$GITHUB_REF_NAME" "msk-core-lua-$VERSION.vsix" \
               --title "$GITHUB_REF_NAME" --notes-file notes.md
           fi
+
+      - name: Marketplace upload reminder
+        if: env.MARKETPLACE_MANUAL == '1'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PUBLISHER="$(node -p "require('./package.json').publisher")"
+          VSIX_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/msk-core-lua-$VERSION.vsix"
+          MANAGE_URL="https://marketplace.visualstudio.com/manage"
+          {
+            echo "## Manual step: VS Code Marketplace"
+            echo
+            echo "This release was not published to the VS Code Marketplace automatically."
+            echo
+            echo "1. Download [msk-core-lua-$VERSION.vsix]($VSIX_URL)"
+            echo "2. Open the [Marketplace management page]($MANAGE_URL) and select the publisher \`$PUBLISHER\`"
+            echo "3. Click **...** next to the extension, then **Update**, and upload the file"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Marketplace upload::Upload $VSIX_URL at $MANAGE_URL"

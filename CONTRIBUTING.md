@@ -71,15 +71,19 @@ Install the resulting `.vsix` via *Extensions: Install from VSIX...*.
    ```
 
 The `release.yml` workflow checks that the tag matches `package.json`, builds
-the `.vsix`, publishes it to the VS Code Marketplace and Open VSX, and creates
-a GitHub release with the changelog section.
+the `.vsix`, publishes it to Open VSX (creating the namespace on the first
+run), and creates a GitHub release with the changelog section and the `.vsix`
+attached.
 
-Required repository secrets:
+Repository secrets:
 
 | Secret | Purpose |
 |---|---|
-| `VSCE_PAT` | Token for the VS Code Marketplace (publisher `musiker15`) |
 | `OVSX_PAT` | Token for Open VSX (namespace `musiker15`) |
+| `VSCE_PAT` | Optional. Token for the VS Code Marketplace (publisher `musiker15`) |
 
-If one of them is missing, that store is skipped with a warning and the rest
-still runs.
+The VS Code Marketplace is currently updated by hand, because automated
+publishing requires an Azure subscription. Without `VSCE_PAT` the workflow
+skips the Marketplace and writes a download link for the `.vsix` and a link
+to the publisher page into the job summary. Upload the file there via
+**...** > **Update**.

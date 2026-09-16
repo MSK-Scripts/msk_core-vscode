@@ -28,8 +28,9 @@ Preparation for publishing on the VS Code Marketplace and Open VSX.
 ### Added
 
 - `mskCore.setRuntime` setting.
-- GitHub Actions: package check on every push, and automatic publishing to
-  both stores when a `v*` tag is pushed. Uses the v7 actions on Node.js 24.
+- GitHub Actions: package check on every push. Pushing a `v*` tag publishes
+  to Open VSX and creates a GitHub release with the `.vsix` attached. Uses the
+  v7 actions on Node.js 24.
 
 ### Changed files
 
